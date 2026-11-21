@@ -3,7 +3,7 @@ import sys, os, time, json, math, importlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import check, preview
 
-MODULES = ['m01_tea', 'm02_chess', 'm03_circus', 'm04_train', 'm05_stadium', 'm06_library', 'm07_turtle', 'm08_windmill', 'm09_solar', 'm10_pirate']
+MODULES = ['m01_tea', 'm02_chess', 'm03_circus', 'm06_library', 'm09_solar']
 ROOT = os.environ.get('BW_ROOT') or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.environ.get('BW_OUT', ROOT + '/out3')
 
@@ -23,8 +23,21 @@ def build_maps(struct_dir, previews=True, only=None):
         (x0, y0, z0), (x1, y1, z1) = cv.bounds()
         org, size, n, npal = cv.save_structure(f'{struct_dir}/{mod.ID}.nbt')
         red = [p for p, t in cv.ents if {'bw.t.red', 'bw.spawn'} <= {str(v) for v in t['Tags']}][0]
+        npcs = []
+        byteam = {}
+        for p, t in cv.ents:
+            tags = {str(v) for v in t['Tags']}
+            team = next((g[5:] for g in tags if g.startswith('bw.t.')), None)
+            if team: byteam.setdefault(team, {}).update({k: p for k in ('bw.spawn', 'bw.shop', 'bw.upgrade') if k in tags})
+        for team, m in byteam.items():
+            sx, sy, sz = m['bw.spawn']
+            for kind in ('shop', 'upgrade'):
+                x, y, z = m['bw.' + kind]
+                dx, dz = sx - x, sz - z                      # look straight out of the niche: the axis that points most towards the team's spawn
+                yaw = (-90.0 if dx > 0 else 90.0) if abs(dx) >= abs(dz) else (0.0 if dz > 0 else 180.0)
+                npcs.append(dict(kind=kind, team=team, pos=[x, y, z], yaw=yaw))
         rec = dict(id=mod.ID, name=mod.NAME, origin=[int(v) for v in org], size=[int(v) for v in size], blocks=n, palette=npal, gate=mod.GATE,
-                   size_text=f'{size[0]}x{size[2]}', red_spawn=list(red), gaps=gaps, physics_fixed=sum(ph.values()), markers=len(cv.ents))
+                   size_text=f'{size[0]}x{size[2]}', red_spawn=list(red), npcs=npcs, gaps=gaps, physics_fixed=sum(ph.values()), markers=len(cv.ents))
         out.append(rec)
         import pickle
         pickle.dump(dict(b=cv.b, ents=[(p, [str(v) for v in t['Tags']]) for p, t in cv.ents]), open(f'{OUT}/canvas/{mod.ID}.pkl', 'wb'))

@@ -52,9 +52,13 @@ def rook_base(dye):
     flag(cv, 0, 12, -7, 6, dye, d=(1, 0), pole='dark_oak_fence')
     # pawns guarding the bed, stalls
     for sx in (-1, 1): chess_piece(cv, sx * 8, 1, 11, 'pawn', pc)
-    stall(cv, -8, 1, 3, 3, 'white', dye); stall(cv, 8, 1, 3, 1, 'white', dye)
+    # the shopkeepers stand in the alcove under the tower wall, each behind a counter in the team colour
+    for sx in (-1, 1):
+        for y in (1, 2): cv.set(sx * 5, y, -8, body); cv.set(sx * 5, y, -6, body)
+        cv.set(sx * 5, 3, -7, None)                                       # head room for the name: the arrow slit above starts one block lower
+        cv.set(sx * 4, 1, -7, T)
     bed(cv, dye, 0, 1, 9)
-    team_markers(cv, dye, spawn=(0, 1, -4), bedpos=(0, 1, 9), gen=(0, 0, -8), shop=(-8, 1, 3), upg=(8, 1, 3))
+    team_markers(cv, dye, spawn=(0, 1, -4), bedpos=(0, 1, 9), gen=(0, 0, -8), shop=(-5, 1, -7), upg=(5, 1, -7))
     return cv
 
 def board():
@@ -151,9 +155,9 @@ def build():
     spots = []
     for q in range(4):
         for sgn in (-1, 1):
-            x, z = rot_xz(79, sgn * 27, q); spots.append((x, z, (q + 1) % 4, sgn > 0))
+            x, z = rot_xz(64, sgn * 22, q); spots.append((x, z, (q + 1) % 4, sgn > 0))
     mb.bases_at(rook_base, spots)
     for q in range(4):
-        x, z = rot_xz(45, 0, q); mb.put(gem_tile(q), x, z, kind='diamond')
-        x, z = rot_xz(70, 70, q); mb.put(bishop_tile(q), x, z, y=2, kind='extra')
+        x, z = rot_xz(37, 0, q); mb.put(gem_tile(q), x, z, kind='diamond')
+        x, z = rot_xz(58, 58, q); mb.put(bishop_tile(q), x, z, y=2, kind='extra')
     return mb

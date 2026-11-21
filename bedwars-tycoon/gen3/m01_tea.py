@@ -49,7 +49,8 @@ def cup_base(dye):
     for dx in range(-2, 3):
         for dz in range(-2, 3):
             if max(abs(dx), abs(dz)) == 2 and cv.empty(dx, 1, -5 + dz): cv.set(dx, 1, -5 + dz, dye + '_carpet')
-    cv.set(-5, 1, -6, 'chest[facing=east]'); cv.set(5, 1, -6, 'ender_chest[facing=west]')
+    cv.set(-5, 1, -6, T); cv.set(5, 1, -6, T)                       # team-coloured stands (the user's fix in the red base)
+    cv.set(-5, 2, -6, 'chest[facing=east]'); cv.set(5, 2, -6, 'ender_chest[facing=west]')
     hang_lamp(cv, -3, 6, -2); hang_lamp(cv, 3, 6, -2); hang_lamp(cv, 0, 6, -8)
     table(cv, -5, 1, -1, 'birch', chairs=((0, 1),)); cv.set(5, 1, -1, 'barrel[facing=up]'); cv.set(5, 2, -1, 'flower_pot')
     cv.set(4, 1, 0, 'quartz_block'); cv.set(-4, 1, -9, 'quartz_block'); cv.set(4, 1, -9, 'quartz_block'); cv.set(4, 2, -9, 'white_candle[candles=3,lit=true]')
@@ -58,8 +59,14 @@ def cup_base(dye):
     for x, y, z in ((8, 1, 2), (9, 1, 2), (8, 1, 3)): cv.set(x, y, z, 'yellow_concrete')                                           # lemon wedge
     cv.set(9, 1, 3, 'white_concrete'); cv.set(8, 2, 2, 'yellow_concrete')
     disc(cv, 8, 1, -8, 2.6, lambda x, y, z: 'dark_oak_planks' if (x * 7 + z * 13) % 5 == 0 else 'stripped_oak_wood')              # biscuit
+    # the two shopkeepers stand inside the cup wall, under its flare; the ring block in front of each is the counter
+    # (the user opened this niche by hand in the red base)
+    for sx in (-1, 1):
+        cv.set(sx * 6, 2, -3, None)                                       # the window they look out of
+        cv.set(sx * 7, 1, -3, T); cv.set(sx * 7, 2, -3, dye + '_stained_glass')
+        cv.set(sx * 6, 1, -4, T); cv.set(sx * 6, 1, -2, T)
     bed(cv, dye, 0, 1, 9)
-    team_markers(cv, dye, spawn=(0, 1, -1), bedpos=(0, 1, 9), gen=(0, 0, -5), shop=(-7, 1, 6), upg=(7, 1, 6))
+    team_markers(cv, dye, spawn=(0, 1, -1), bedpos=(0, 1, 9), gen=(0, 0, -5), shop=(-6, 1, -3), upg=(6, 1, -3))
     return cv
 
 def cake():
@@ -143,9 +150,9 @@ def xform(s, k):
 def build():
     mb = MapBuilder(101)
     mb.put(cake(), 0, 0, kind='mid')
-    mb.bases(cup_base, 80, 22.5)
+    mb.bases(cup_base, 60, 22.5)
     for i, col in enumerate(('magenta', 'light_blue', 'orange', 'purple')):
-        a = math.radians(90 * i); mb.put(macaron(col), round(44 * math.cos(a)), round(44 * math.sin(a)), kind='diamond')
+        a = math.radians(90 * i); mb.put(macaron(col), round(36 * math.cos(a)), round(36 * math.sin(a)), kind='diamond')
     for i, col in enumerate(('brown', 'magenta', 'light_blue', 'white')):
-        a = math.radians(45 + 90 * i); mb.put(donut(col), round(46 * math.cos(a)), round(46 * math.sin(a)), y=3, kind='extra')
+        a = math.radians(45 + 90 * i); mb.put(donut(col), round(37 * math.cos(a)), round(37 * math.sin(a)), y=3, kind='extra')
     return mb

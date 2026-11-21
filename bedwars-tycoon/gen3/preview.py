@@ -140,3 +140,19 @@ def iso2(cv, s=4, rot=0, yk=2.5, bg=(18, 20, 28)):
     return Image.fromarray(img.reshape(H, W, 3))
 
 def iso(cv, s=2, rot=0): return iso2(cv, s, rot, yk=2)
+
+def front(cv, s=4, zmin=None, zmax=None, bg=(18, 20, 28)):
+    """elevation seen from +z looking towards -z (nearer blocks hide farther ones); optional z range"""
+    P, C = arrays(cv)
+    m = np.ones(len(P), bool)
+    if zmin is not None: m &= P[:, 2] >= zmin
+    if zmax is not None: m &= P[:, 2] <= zmax
+    P, C = P[m], C[m]
+    order = np.argsort(P[:, 2], kind='stable')
+    P, C = P[order], C[order]
+    x0, y0 = P[:, 0].min(), P[:, 1].min(); W = P[:, 0].max() - x0 + 1; H = P[:, 1].max() - y0 + 1
+    img = np.zeros((H, W, 3), np.float32); img[:] = bg
+    zn = (P[:, 2] - P[:, 2].min()) / max(1, (P[:, 2].max() - P[:, 2].min()))
+    img[H - 1 - (P[:, 1] - y0), P[:, 0] - x0] = C * (0.55 + 0.45 * zn[:, None])
+    im = Image.fromarray(img.clip(0, 255).astype(np.uint8))
+    return im.resize((W * s, H * s), Image.NEAREST)

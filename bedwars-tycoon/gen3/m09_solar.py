@@ -48,8 +48,13 @@ def planet_base(dye):
     for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1)): cv.set(rx + dx, 8, rz + dz, T)
     for dx, dz in ((2, 0), (-2, 0), (0, 2), (0, -2)): cv.set(rx + dx, 1, rz + dz, T); cv.set(rx + dx, 2, rz + dz, T)
     cv.set(rx, 1, rz, 'polished_blackstone')
+    # the shopkeepers stand inside the dome, between two white pillars and behind a counter in the team colour
+    for sx in (-1, 1):
+        for z in (-5, -3):
+            for y in (1, 2): cv.set(sx * 5, y, z, 'white_concrete')
+        cv.set(sx * 4, 1, -4, T)
     bed(cv, dye, 0, 1, 8)
-    team_markers(cv, dye, spawn=(0, 1, -1), bedpos=(0, 1, 8), gen=(0, 0, -5), shop=(-6, 1, 6), upg=(6, 1, 6))
+    team_markers(cv, dye, spawn=(0, 1, -1), bedpos=(0, 1, 8), gen=(0, 0, -5), shop=(-5, 1, -4), upg=(5, 1, -4))
     return cv
 
 def sun():
@@ -139,20 +144,20 @@ def comet(i):
 def build():
     mb = MapBuilder(909)
     mb.put(sun(), 0, 0, kind='mid'); mb.put(station(), 0, 0, kind='mid')
-    mb.bases(planet_base, 118, 22)
+    mb.bases(planet_base, 124, 22)
     rng = mb.cv.rng
     for k in range(4):
-        x, z = rot_xz(57, 57, k); mb.put(planet(k), x, z, kind='diamond')
-        x, z = rot_xz(43, 43, k); mb.put(asteroid(50 + k, 4.6), x, z, y=-2, kind='extra')
-        x, z = rot_xz(92, 92, k); mb.put(comet(k), x, z, y=4, k=k, kind='extra')
+        x, z = rot_xz(66, 66, k); mb.put(planet(k), x, z, kind='diamond')
+        x, z = rot_xz(47, 47, k); mb.put(asteroid(50 + k, 4.6), x, z, y=-2, kind='extra')
+        x, z = rot_xz(97, 97, k); mb.put(comet(k), x, z, y=4, k=k, kind='extra')
     for i in range(26):                                                 # asteroid belt
-        a = rng.uniform(0, 360); r = rng.uniform(50, 66)
+        a = rng.uniform(0, 360); r = rng.uniform(54, 74)
         d = (a % 90) - 45
         if abs(d) < 16 or abs(abs(d) - 45) < 4: continue
         mb.put(asteroid(i), round(r * math.cos(math.radians(a))), round(r * math.sin(math.radians(a))), y=rng.randint(-6, 6), kind='rock')
     for a in range(0, 360, 4):                                          # the dotted orbit of the small planets
         d = (a % 90) - 45
         if abs(d) < 9: continue
-        x, z = round(80.6 * math.cos(math.radians(a))), round(80.6 * math.sin(math.radians(a)))
+        x, z = round(93.3 * math.cos(math.radians(a))), round(93.3 * math.sin(math.radians(a)))
         mb.cv.set(x, 0, z, 'sea_lantern' if a % 12 == 0 else 'white_stained_glass')
     return mb

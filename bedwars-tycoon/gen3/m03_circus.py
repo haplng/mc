@@ -52,14 +52,23 @@ def tent_base(dye):
             for y in range(1, 6): cv.set(x, y, z, 'spruce_fence')
             cv.set(x, 6, z, 'lantern[hanging=false]')
     gen_pad(cv, cx, 0, cz, 'iron', frame='smooth_sandstone')
-    cv.set(-6, 1, -3, 'chest[facing=east]'); cv.set(6, 1, -3, 'ender_chest[facing=west]')
-    # outside: stalls, balloons, popcorn
-    stall(cv, -9, 1, 5, 3, 'white', dye); stall(cv, 9, 1, 5, 1, 'white', dye)
+    cv.set(-7, 1, 0, 'chest[facing=east]'); cv.set(7, 1, 0, 'ender_chest[facing=west]')
+    # the shopkeepers sit in ticket booths against the tent wall
+    for sx in (-1, 1):
+        for z in (-4, -2):
+            for y in (1, 2, 3): cv.set(sx * 8, y, z, TC)
+        for z in (-4, -3, -2):                                             # striped awning, high enough to leave the name readable
+            cv.set(sx * 8, 4, z, T if z == -3 else W); cv.set(sx * 7, 4, z, W if z == -3 else T)
+        cv.set(sx * 7, 1, -3, TC)                                           # counter
+    # outside: balloons, a few bales and barrels where the stalls used to be
+    for (x, z, s) in ((-10, 4, 'hay_block[axis=y]'), (-10, 5, 'barrel[facing=up]'), (-9, 5, 'hay_block[axis=x]'), (10, 4, 'barrel[facing=up]'), (10, 5, 'hay_block[axis=y]'), (9, 5, 'barrel[facing=up]')):
+        cv.set(x, 1, z, s)
+    cv.set(-10, 2, 5, 'hay_block[axis=y]'); cv.set(10, 2, 5, 'lantern[hanging=false]')
     for i, (x, z, col) in enumerate(((11, 1, 'orange'), (-11, 0, 'magenta'), (10, -1, 'light_blue'))):
         for y in range(1, 4 + i % 2): cv.set(x, y, z, 'oak_fence')
         cv.set(x, 4 + i % 2, z, col + '_wool'); cv.set(x, 5 + i % 2, z, col + '_wool')
     bed(cv, dye, 0, 1, 9)
-    team_markers(cv, dye, spawn=(0, 1, 2), bedpos=(0, 1, 9), gen=(cx, 0, cz), shop=(-9, 1, 5), upg=(9, 1, 5))
+    team_markers(cv, dye, spawn=(0, 1, 2), bedpos=(0, 1, 9), gen=(cx, 0, cz), shop=(-8, 1, -3), upg=(8, 1, -3))
     return cv
 
 def ferris(cv, x, y, z, R=7):
@@ -92,14 +101,14 @@ def lobe(kind):
     for (x, z) in ((-7, 4), (4, -7)): post_lamp(cv, x, 1, z, 'spruce_fence', 'lantern', 3)
     return cv
 
-def fairground():
+def fairground(L=40):
     cv = Canvas(33)
     P = 'birch_planks'
     st = sectors(0, 0, 32, ['purple_wool', 'yellow_wool'])
     # catwalks along the diagonals (drawn first, the plaza goes over them)
     for sx in (-1, 1):
         for sz in (-1, 1):
-            for i in range(10, 34):
+            for i in range(10, L - 6):
                 for w in range(-3, 4):
                     x, z = sx * i + (w if sx * sz > 0 else w), sz * i - (w if sx * sz > 0 else -w)
                     for e in (0, 1):
@@ -149,10 +158,11 @@ def balloons(i):
 
 def build():
     mb = MapBuilder(303)
-    mb.put(fairground(), 0, 0, kind='mid')
+    L = 35
+    mb.put(fairground(L), 0, 0, kind='mid')
     for k in range(4):
-        x, z = rot_xz(40, 40, k); mb.put(lobe(k), x, z, k=k, kind='mid')
-    mb.bases(tent_base, 92, 23)
+        x, z = rot_xz(L, L, k); mb.put(lobe(k), x, z, k=k, kind='mid')
+    mb.bases(tent_base, 81.5, 23)
     for k in range(4):
-        x, z = rot_xz(42, 0, k); mb.put(balloons(k), x, z, y=-2, kind='extra')
+        x, z = rot_xz(37, 0, k); mb.put(balloons(k), x, z, y=-2, kind='extra')
     return mb

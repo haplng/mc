@@ -3,16 +3,16 @@
   "id": "lobby",
   "name": "로비",
   "place": [
-   -88,
-   11,
-   -58
+   -80,
+   21,
+   -64
   ],
   "size": [
-   178,
-   85,
-   158
+   161,
+   93,
+   118
   ],
-  "blocks": 256919,
+  "blocks": 253930,
   "center": [
    0,
    64,
@@ -21,9 +21,9 @@
   "box": [
    -89,
    10,
-   -59,
+   -65,
    90,
-   96,
+   114,
    100
   ]
  },
@@ -31,16 +31,16 @@
   "id": "tea",
   "name": "티타임",
   "place": [
-   513,
+   532,
    51,
-   -87
+   -68
   ],
   "size": [
-   175,
+   137,
    31,
-   175
+   137
   ],
-  "blocks": 28198,
+  "blocks": 28262,
   "center": [
    600,
    64,
@@ -55,199 +55,115 @@
    95
   ],
   "tp": [
-   675.5,
+   656.5,
    65.0,
-   -30.5,
-   68.0
+   -22.5,
+   68.3
   ],
   "gaps": {
-   "base-base": 34,
-   "base-diamond": 23,
-   "base-extra": 21,
-   "base-mid": 49,
-   "diamond-diamond": 48,
-   "diamond-extra": 20,
-   "diamond-mid": 20,
-   "extra-extra": 52,
-   "extra-mid": 22
+   "base-base": 18,
+   "base-diamond": 9,
+   "base-extra": 9,
+   "base-mid": 29,
+   "diamond-diamond": 37,
+   "diamond-extra": 13,
+   "diamond-mid": 12,
+   "extra-extra": 38,
+   "extra-mid": 12
   }
  },
  {
   "id": "chess",
   "name": "체스",
   "place": [
-   907,
+   922,
    50,
-   -93
+   -78
   ],
   "size": [
-   187,
+   157,
    35,
-   187
+   157
   ],
-  "blocks": 46596,
+  "blocks": 46436,
   "center": [
    1000,
    64,
    0
   ],
   "box": [
-   902,
+   896,
    26,
-   -98,
-   1098,
+   -104,
+   1104,
    85,
-   98
+   104
   ],
   "tp": [
-   1083.5,
+   1068.5,
    65.0,
-   -26.5,
-   72.4
+   -21.5,
+   72.6
   ],
   "gaps": {
-   "base-base": 32,
-   "base-diamond": 19,
-   "base-extra": 28,
-   "base-mid": 41,
-   "diamond-diamond": 49,
-   "diamond-extra": 63,
-   "diamond-mid": 15,
-   "extra-extra": 132,
-   "extra-mid": 62
+   "base-base": 22,
+   "base-diamond": 10,
+   "base-extra": 21,
+   "base-mid": 25,
+   "diamond-diamond": 38,
+   "diamond-extra": 50,
+   "diamond-mid": 7,
+   "extra-extra": 108,
+   "extra-mid": 45
   }
  },
  {
   "id": "circus",
   "name": "서커스",
   "place": [
-   1302,
+   1312,
    51,
-   -98
+   -88
   ],
   "size": [
-   197,
+   177,
    33,
-   197
+   177
   ],
-  "blocks": 62833,
+  "blocks": 62369,
   "center": [
    1400,
    64,
    0
   ],
   "box": [
-   1294,
+   1286,
    31,
-   -106,
-   1506,
+   -114,
+   1514,
    86,
-   106
+   114
   ],
   "tp": [
-   1483.5,
-   65.0,
-   -35.5,
-   67.0
-  ],
-  "gaps": {
-   "base-base": 42,
-   "base-extra": 35,
-   "base-mid": 22,
-   "extra-extra": 46,
-   "extra-mid": 18,
-   "mid-mid": 0
-  }
- },
- {
-  "id": "train",
-  "name": "기차",
-  "place": [
-   1697,
-   54,
-   -103
-  ],
-  "size": [
-   207,
-   24,
-   207
-  ],
-  "blocks": 68170,
-  "center": [
-   1800,
-   64,
-   0
-  ],
-  "box": [
-   1691,
-   35,
-   -109,
-   1909,
-   81,
-   109
-  ],
-  "tp": [
-   1893.5,
+   1473.5,
    65.0,
    -31.5,
-   71.4
+   66.8
   ],
   "gaps": {
    "base-base": 34,
-   "base-mid": 21,
-   "mid-mid": 1
-  }
- },
- {
-  "id": "stadium",
-  "name": "축구장",
-  "place": [
-   2095,
-   43,
-   -81
-  ],
-  "size": [
-   211,
-   40,
-   163
-  ],
-  "blocks": 120018,
-  "center": [
-   2200,
-   64,
-   0
-  ],
-  "box": [
-   2088,
-   32,
-   -112,
-   2312,
-   92,
-   112
-  ],
-  "tp": [
-   2108.5,
-   65.0,
-   -62.5,
-   -55.7
-  ],
-  "gaps": {
-   "base-base": 34,
-   "base-diamond": 18,
-   "base-extra": 49,
-   "base-mid": 22,
-   "diamond-diamond": 52,
-   "diamond-extra": 22,
-   "diamond-mid": 14,
-   "extra-extra": 124,
-   "extra-mid": 18
+   "base-extra": 29,
+   "base-mid": 17,
+   "extra-extra": 39,
+   "extra-mid": 14,
+   "mid-mid": 0
   }
  },
  {
   "id": "library",
   "name": "도서관",
   "place": [
-   2489,
+   1689,
    47,
    -111
   ],
@@ -256,22 +172,22 @@
    36,
    223
   ],
-  "blocks": 103342,
+  "blocks": 103278,
   "center": [
-   2600,
+   1800,
    64,
    0
   ],
   "box": [
-   2483,
-   34,
-   -117,
-   2717,
-   85,
-   117
+   1676,
+   35,
+   -124,
+   1924,
+   83,
+   124
   ],
   "tp": [
-   2703.5,
+   1903.5,
    65.0,
    -27.5,
    75.1
@@ -289,24 +205,77 @@
   }
  },
  {
-  "id": "turtle",
-  "name": "거북",
+  "id": "solar",
+  "name": "태양계",
   "place": [
-   2884,
-   39,
-   -116
+   2067,
+   35,
+   -133
   ],
   "size": [
-   233,
-   39,
-   233
+   267,
+   41,
+   267
   ],
-  "blocks": 88677,
+  "blocks": 60680,
   "center": [
-   3000,
+   2200,
    64,
    0
   ],
+  "box": [
+   2066,
+   32,
+   -134,
+   2334,
+   92,
+   134
+  ],
+  "tp": [
+   2316.5,
+   65.0,
+   -45.5,
+   68.7
+  ],
+  "gaps": {
+   "base-base": 56,
+   "base-diamond": 22,
+   "base-extra": 32,
+   "base-mid": 65,
+   "base-rock": 32,
+   "diamond-diamond": 114,
+   "diamond-extra": 10,
+   "diamond-mid": 37,
+   "diamond-rock": 24,
+   "extra-extra": 62,
+   "extra-mid": 18,
+   "extra-rock": 17,
+   "mid-mid": 0,
+   "mid-rock": 11,
+   "rock-rock": 0
+  }
+ },
+ {
+  "id": "slot7",
+  "name": "(비움)",
+  "box": [
+   2483,
+   34,
+   -117,
+   2717,
+   85,
+   117
+  ],
+  "center": [
+   2600,
+   64,
+   0
+  ],
+  "empty": true
+ },
+ {
+  "id": "slot8",
+  "name": "(비움)",
   "box": [
    2880,
    27,
@@ -315,43 +284,16 @@
    81,
    120
   ],
-  "tp": [
-   3103.5,
-   65.0,
-   -37.5,
-   70.1
-  ],
-  "gaps": {
-   "base-base": 32,
-   "base-diamond": 19,
-   "base-extra": 25,
-   "base-mid": 44,
-   "diamond-diamond": 64,
-   "diamond-extra": 32,
-   "diamond-mid": 13,
-   "extra-extra": 85,
-   "extra-mid": 21
-  }
- },
- {
-  "id": "windmill",
-  "name": "풍차",
-  "place": [
-   3280,
-   38,
-   -121
-  ],
-  "size": [
-   242,
-   58,
-   243
-  ],
-  "blocks": 140351,
   "center": [
-   3400,
+   3000,
    64,
    0
   ],
+  "empty": true
+ },
+ {
+  "id": "slot9",
+  "name": "(비움)",
   "box": [
    3276,
    30,
@@ -360,43 +302,16 @@
    96,
    124
   ],
-  "tp": [
-   3499.5,
-   65.0,
-   -37.5,
-   69.3
-  ],
-  "gaps": {
-   "base-base": 49,
-   "base-diamond": 24,
-   "base-extra": 27,
-   "base-mid": 59,
-   "diamond-diamond": 148,
-   "diamond-extra": 63,
-   "diamond-mid": 73,
-   "extra-extra": 59,
-   "extra-mid": 20
-  }
- },
- {
-  "id": "solar",
-  "name": "태양계",
-  "place": [
-   3673,
-   35,
-   -127
-  ],
-  "size": [
-   255,
-   41,
-   255
-  ],
-  "blocks": 60600,
   "center": [
-   3800,
+   3400,
    64,
    0
   ],
+  "empty": true
+ },
+ {
+  "id": "slot10",
+  "name": "(비움)",
   "box": [
    3672,
    25,
@@ -405,49 +320,16 @@
    90,
    128
   ],
-  "tp": [
-   3910.5,
-   65.0,
-   -43.5,
-   68.5
-  ],
-  "gaps": {
-   "base-base": 52,
-   "base-diamond": 23,
-   "base-extra": 29,
-   "base-mid": 59,
-   "base-rock": 34,
-   "diamond-diamond": 96,
-   "diamond-extra": 3,
-   "diamond-mid": 24,
-   "diamond-rock": 19,
-   "extra-extra": 61,
-   "extra-mid": 12,
-   "extra-rock": 15,
-   "mid-mid": 0,
-   "mid-rock": 7,
-   "rock-rock": 0
-  }
- },
- {
-  "id": "pirate",
-  "name": "해적",
-  "place": [
-   4067,
-   35,
-   -133
-  ],
-  "size": [
-   267,
-   58,
-   267
-  ],
-  "blocks": 105743,
   "center": [
-   4200,
+   3800,
    64,
    0
   ],
+  "empty": true
+ },
+ {
+  "id": "slot11",
+  "name": "(비움)",
   "box": [
    4066,
    28,
@@ -456,27 +338,11 @@
    93,
    134
   ],
-  "tp": [
-   4318.5,
-   65.0,
-   -28.5,
-   76.5
+  "center": [
+   4200,
+   64,
+   0
   ],
-  "gaps": {
-   "base-base": 46,
-   "base-diamond": 23,
-   "base-extra": 27,
-   "base-mid": 52,
-   "base-rock": 34,
-   "diamond-diamond": 89,
-   "diamond-extra": 38,
-   "diamond-mid": 15,
-   "diamond-rock": 6,
-   "extra-extra": 105,
-   "extra-mid": 41,
-   "extra-rock": 36,
-   "mid-rock": 13,
-   "rock-rock": 20
-  }
+  "empty": true
  }
 ]

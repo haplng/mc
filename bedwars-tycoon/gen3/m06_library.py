@@ -56,7 +56,13 @@ def book_base(dye):
     gen_pad(cv, 0, 0, -10, 'iron', frame='dark_oak_planks')
     for x in list(range(-7, -2)) + list(range(3, 8)):
         for y in (1, 2, 3): cv.set(x, y, -13, 'bookshelf')
-    cv.set(0, 1, -13, 'lectern[facing=south]'); cv.set(-6, 1, -7, 'enchanting_table'); cv.set(6, 1, -7, 'cartography_table')
+    cv.set(0, 1, -13, 'lectern[facing=south]'); cv.set(-6, 1, -12, 'enchanting_table'); cv.set(6, 1, -12, 'cartography_table')
+    # the shopkeepers stand in niches framed with bookshelves, each behind a desk
+    for sx in (-1, 1):
+        for z in (-9, -7):
+            for y in (1, 2, 3): cv.set(sx * 7, y, z, 'bookshelf')
+        for z in (-9, -8, -7): cv.set(sx * 7, 4, z, 'dark_oak_planks')
+        cv.set(sx * 6, 1, -8, 'dark_oak_planks')
     cv.set(-7, 1, -10, 'chest[facing=east]'); cv.set(7, 1, -10, 'ender_chest[facing=west]')
     for x in (-4, 4): hang_lamp(cv, x, 5, -9)
     for x in range(-2, 3):
@@ -78,9 +84,8 @@ def book_base(dye):
     for x in (5, 6):
         for y in range(-7, 0): cv.set(x, y, 16, dye + '_wool')
     cv.set(5, -8, 16, dye + '_wool')
-    stall(cv, -8, 1, 3, 3, 'brown', dye, counter='bookshelf', post='dark_oak_fence'); stall(cv, 8, 1, 3, 1, 'brown', dye, counter='bookshelf', post='dark_oak_fence')
     bed(cv, dye, 0, 1, 9)
-    team_markers(cv, dye, spawn=(0, 1, -7), bedpos=(0, 1, 9), gen=(0, 0, -10), shop=(-8, 1, 3), upg=(8, 1, 3))
+    team_markers(cv, dye, spawn=(0, 1, -7), bedpos=(0, 1, 9), gen=(0, 0, -10), shop=(-7, 1, -8), upg=(7, 1, -8))
     return cv
 
 def table():
@@ -124,13 +129,14 @@ def table():
                 cv.set(x, y, z, xs('spruce_stairs[facing=west,half=bottom]', k))
     return cv
 
-def arc(i):
-    """a curved wall of shelves with a gallery; local +x is outwards"""
+def arc(i, d=0):
+    """a curved wall of shelves with a gallery; local +x is outwards; d moves the whole arc outwards"""
     cv = Canvas(67 + i)
     Dk = 'dark_oak_planks'
-    for x in range(40, 66):
-        for z in range(-32, 33):
-            r = math.hypot(x + 0.0, z); a = math.degrees(math.atan2(z, x))
+    zb = int((63 + d) * math.sin(math.radians(25))) + 3
+    for x in range(40 + d, 67 + d):
+        for z in range(-zb, zb + 1):
+            r = math.hypot(x + 0.0, z) - d; a = math.degrees(math.atan2(z, x))
             if not (47.5 <= r < 62.5 and abs(a) <= 25): continue
             edge = r < 48.5 or r >= 61.5 or abs(a) > 24
             cv.set(x, 0, z, Dk if edge else ('spruce_planks' if int(r) % 4 else 'stripped_spruce_wood')); cv.set(x, -1, z, Dk)
@@ -153,18 +159,18 @@ def arc(i):
                 cv.set(x, 4, z, 'lantern[hanging=false]')
             if 59 <= r < 60 and int(abs(a) * 10) % 60 == 30: hang_lamp(cv, x, 4, z)
     # ladder up to the gallery at one end, reading desk in the middle, the generator
-    for y in range(1, 6): cv.set(53, y, 24, 'dark_oak_log[axis=y]')
-    for y in range(1, 6): cv.set(52, y, 24, 'ladder[facing=west]')
-    cv.set(52, 5, 24, 'ladder[facing=west]'); cv.set(54, 5, 24, 'spruce_planks'); cv.set(54, 5, 25, 'spruce_planks')
+    for y in range(1, 6): cv.set(53 + d, y, 24, 'dark_oak_log[axis=y]')
+    for y in range(1, 6): cv.set(52 + d, y, 24, 'ladder[facing=west]')
+    cv.set(52 + d, 5, 24, 'ladder[facing=west]'); cv.set(54 + d, 5, 24, 'spruce_planks'); cv.set(54 + d, 5, 25, 'spruce_planks')
     for z in (-3, -2, -1, 0, 1, 2, 3):
-        cv.set(56, 1, z, 'dark_oak_slab[type=top]') if abs(z) != 3 else cv.set(56, 1, z, 'dark_oak_planks')
-    cv.set(56, 2, 0, 'lectern[facing=west]'); cv.set(56, 2, -2, 'lantern[hanging=false]'); cv.set(56, 2, 2, 'flower_pot')
-    cv.set(54, 1, 0, 'spruce_stairs[facing=east,half=bottom]')
-    for x in (52, 53, 54, 55):
+        cv.set(56 + d, 1, z, 'dark_oak_slab[type=top]') if abs(z) != 3 else cv.set(56 + d, 1, z, 'dark_oak_planks')
+    cv.set(56 + d, 2, 0, 'lectern[facing=west]'); cv.set(56 + d, 2, -2, 'lantern[hanging=false]'); cv.set(56 + d, 2, 2, 'flower_pot')
+    cv.set(54 + d, 1, 0, 'spruce_stairs[facing=east,half=bottom]')
+    for x in (52 + d, 53 + d, 54 + d, 55 + d):
         for z in (-2, -1, 0, 1, 2):
             if cv.empty(x, 1, z): cv.set(x, 1, z, 'red_carpet')
-    for (x, z) in ((57, -9), (57, 9)): box(cv, x, 1, z - 1, x + 1, 2, z + 1, 'bookshelf'); cv.set(x, 3, z, 'bookshelf')
-    gen_pad(cv, 50, 0, 0, 'diamond', frame='dark_oak_planks'); gem_marker(cv, 50, 0, 0, 'diamond')
+    for (x, z) in ((57 + d, -9), (57 + d, 9)): box(cv, x, 1, z - 1, x + 1, 2, z + 1, 'bookshelf'); cv.set(x, 3, z, 'bookshelf')
+    gen_pad(cv, 50 + d, 0, 0, 'diamond', frame='dark_oak_planks'); gem_marker(cv, 50 + d, 0, 0, 'diamond')
     return cv
 
 def flying_book(i):
@@ -180,7 +186,7 @@ def flying_book(i):
 def build():
     mb = MapBuilder(606)
     mb.put(table(), 0, 0, kind='mid')
-    for k in range(4): mb.put(arc(k), 0, 0, k=k, kind='diamond')
+    for k in range(4): mb.put(arc(k, 0), 0, 0, k=k, kind='diamond')
     mb.bases(book_base, 100, 16)
     for k in range(4):
         x, z = rot_xz(53, 53, k); mb.put(flying_book(k), x, z, y=7, k=k, kind='extra')

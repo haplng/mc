@@ -235,6 +235,28 @@ def _floor(cv, p):
 def _stand(cv, x, y, z):
     return _floor(cv, (x, y - 1, z)) and _open(cv, (x, y, z)) and _open(cv, (x, y + 1, z))
 
+def _clickable(cv, seen, npc, rng=3.0):
+    """can a player standing on one of the walked cells right-click a villager at `npc`? (within reach, nothing solid in between)"""
+    nx, ny, nz = npc
+    for dx in range(-3, 4):
+        for dz in range(-3, 4):
+            for dy in (-1, 0, 1):
+                c = (nx + dx, ny + dy, nz + dz)
+                if c not in seen: continue
+                ex, ey, ez = c[0] + 0.5, c[1] + 1.62, c[2] + 0.5
+                for ty in (1.7, 1.2):                              # the villager's head, then its chest
+                    tx, tyy, tz = nx + 0.5, ny + ty, nz + 0.5
+                    d = math.dist((ex, ey, ez), (tx, tyy, tz))
+                    if d > rng + 0.3: continue
+                    ok = True; n = int(d / 0.05) + 1
+                    for i in range(1, n):
+                        px, py, pz = ex + (tx - ex) * i / n, ey + (tyy - ey) * i / n, ez + (tz - ez) * i / n
+                        q = (math.floor(px), math.floor(py), math.floor(pz))
+                        if q[0] == nx and q[2] == nz and q[1] in (ny, ny + 1): break       # arrived at the villager
+                        if not _open(cv, q): ok = False; break
+                    if ok: return True
+    return False
+
 def reach(cv, label='', limit=4000):
     """walk (steps up 1, drops up to 3, ladders) from each team's spawn; report bed / generator / shops that cannot be reached"""
     import collections
@@ -264,8 +286,9 @@ def reach(cv, label='', limit=4000):
             if nm(cv.b.get((x, y - 1, z)) or '') == 'ladder': nxt.append((x, y - 1, z))
             for q in nxt:
                 if q not in seen: seen.add(q); dq.append(q)
-        for k in ('bw.gen', 'bw.shop', 'bw.upgrade'):
-            if m.get(k) and m[k] not in seen: bad.append((team, k + ' unreachable', m[k]))
+        if m.get('bw.gen') and m['bw.gen'] not in seen: bad.append((team, 'bw.gen unreachable', m['bw.gen']))
+        for k in ('bw.shop', 'bw.upgrade'):                       # a shopkeeper may stand behind a counter: someone must be able to click it
+            if m.get(k) and m[k] not in seen and not _clickable(cv, seen, m[k]): bad.append((team, k + ' cannot be clicked', m[k]))
         b = m.get('bw.bed')
         if b and not any((b[0] + dx, b[1], b[2] + dz) in seen for dx in (-1, 0, 1) for dz in (-2, -1, 0, 1, 2)): bad.append((team, 'bed unreachable', b))
         m['area'] = len(seen)
