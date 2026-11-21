@@ -85,7 +85,7 @@ def book_base(dye):
         for y in range(-7, 0): cv.set(x, y, 16, dye + '_wool')
     cv.set(5, -8, 16, dye + '_wool')
     bed(cv, dye, 0, 1, 9)
-    team_markers(cv, dye, spawn=(0, 1, -7), bedpos=(0, 1, 9), gen=(0, 0, -10), shop=(-7, 1, -8), upg=(7, 1, -8))
+    team_markers(cv, dye, spawn=(0, 1, -7), bedpos=(0, 1, 9), gen=(0, 0, -10), shop=(-7, 1, -8), upg=(7, 1, -8), dz2=-1)
     return cv
 
 def table():

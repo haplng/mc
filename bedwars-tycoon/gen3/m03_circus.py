@@ -68,7 +68,7 @@ def tent_base(dye):
         for y in range(1, 4 + i % 2): cv.set(x, y, z, 'oak_fence')
         cv.set(x, 4 + i % 2, z, col + '_wool'); cv.set(x, 5 + i % 2, z, col + '_wool')
     bed(cv, dye, 0, 1, 9)
-    team_markers(cv, dye, spawn=(0, 1, 2), bedpos=(0, 1, 9), gen=(cx, 0, cz), shop=(-8, 1, -3), upg=(8, 1, -3))
+    team_markers(cv, dye, spawn=(0, 1, 2), bedpos=(0, 1, 9), gen=(cx, 0, cz), shop=(-8, 1, -3), upg=(8, 1, -3), dz2=1)
     return cv
 
 def ferris(cv, x, y, z, R=7):

@@ -134,6 +134,65 @@ def upgrade_hall(cv):
     cv.set(X1 - 2, 1, Z1 - 1, 'enchanting_table'); cv.set(X1 - 3, 1, Z1 - 1, 'bookshelf'); cv.set(X1 - 3, 2, Z1 - 1, 'bookshelf'); cv.set(X1 - 4, 1, Z1 - 1, 'bookshelf')
     for x in (X0 + 2, X1 - 3): hang_lamp(cv, x, ridge - 3, zc, chain=2)
     cv.marker(UNLOCK_NPC[0], UNLOCK_NPC[1], UNLOCK_NPC[2], ['bw', 'bw.lobby', 'bw.lobby.unlock'])
+    counter(cv, cx, 1, zc, 1, 'east', ['bw', 'bw.lobby', 'bw.gui', 'bw.gui.unlock'])       # the unlock window (v8)
+
+MARKET = dict(x0=-31, x1=-21, z0=-12, z1=2, floor=-8, hole=(-26, -5))     # the black market: a cellar under the giant bed
+DEALER = (-26, -7, -10, 0.0)                                             # its keeper (lobby coordinates), looking south at the stairs
+
+def black_market(cv):
+    """Under the giant bed there is a hole in the lawn; a ladder leads down to a cellar where a dealer sells things no shop would.
+    Nothing shows from outside: the hole is in the bed's shadow and the cellar is dug into the island."""
+    import random
+    rng = random.Random(9133)
+    X0, X1, Z0, Z1, F = MARKET['x0'], MARKET['x1'], MARKET['z0'], MARKET['z1'], MARKET['floor']
+    hx, hz = MARKET['hole']
+    for x in range(X0 - 1, X1 + 2):                                   # the island must be thick enough to hide the room
+        for z in range(Z0 - 1, Z1 + 2):
+            assert all(cv.get(x, y, z) for y in range(F - 2, 0)), ('the cellar would show at', (x, z))
+    wall = lambda: rng.choice(['polished_blackstone_bricks'] * 6 + ['cracked_polished_blackstone_bricks'] * 2 + ['polished_blackstone', 'deepslate_tiles'])
+    for x in range(X0, X1 + 1):
+        for z in range(Z0, Z1 + 1):
+            edge = x in (X0, X1) or z in (Z0, Z1)
+            cv.set(x, F, z, 'deepslate_tiles' if (x + z) % 2 else 'polished_blackstone')
+            for y in range(F + 1, F + 5): cv.set(x, y, z, wall() if edge else None)
+            cv.set(x, F + 5, z, 'dark_oak_planks' if not edge else wall())
+    for x in range(X0 + 1, X1):                                        # beams under the ceiling
+        if (x - X0) % 3 == 0:
+            for z in range(Z0 + 1, Z1): cv.set(x, F + 4, z, 'dark_oak_slab[type=top]')
+    # the way in: a hole in the lawn under the bed, a ladder down the south wall of the shaft
+    for y in range(F + 5, 1): cv.set(hx, y, hz, None)
+    for y in range(F + 1, 1): cv.set(hx, y, hz, 'ladder[facing=north]')
+    for y in range(F + 5, 0): cv.set(hx, y, hz + 1, wall())            # what the ladder hangs on, above the ceiling
+    for y in (1, 2): assert cv.name(hx, y, hz) in (None,) + SOFT
+    cv.set(hx, 1, hz, None)
+    # the dealer's end: counter with the chest, shelves of contraband behind him
+    dz = DEALER[2]
+    for x in range(X0 + 1, X1): cv.set(x, F + 1, dz + 2, 'crying_obsidian' if x in (hx - 1, hx + 2) else 'polished_blackstone_wall')
+    counter_ns(cv, hx, F + 1, dz + 2, ['bw', 'bw.lobby', 'bw.gui', 'bw.gui.black'])
+    shelf = ['barrel[facing=south]', 'bookshelf', 'ender_chest[facing=south]', 'tnt', 'barrel[facing=south]', 'respawn_anchor[charges=2]', 'bookshelf', 'barrel[facing=south]', 'lodestone']
+    for i, x in enumerate(range(X0 + 1, X1)):
+        cv.set(x, F + 1, Z0 + 1, shelf[i % len(shelf)]); cv.set(x, F + 2, Z0 + 1, rng.choice(['bookshelf', 'barrel[facing=south]', 'chiseled_bookshelf[facing=south]']))
+        cv.set(x, F + 3, Z0 + 1, 'polished_blackstone_slab[type=top]')
+    for x in (X0 + 1, X1 - 1):
+        cv.set(x, F + 3, dz + 2, 'soul_lantern[hanging=false]') if False else cv.set(x, F + 2, dz + 2, 'soul_lantern[hanging=false]')
+    # the room: rugs, crates, a brewing corner, soul light
+    for x in range(hx - 1, hx + 2):
+        for z in range(dz + 3, Z1): cv.set(x, F + 1, z, 'purple_carpet' if x == hx else 'black_carpet')
+    for y in range(F + 1, F + 5): cv.set(hx, y, hz + 1, 'dark_oak_log[axis=y]')           # the post the ladder hangs on
+    cv.set(hx, F + 1, hz, 'ladder[facing=north]')
+    for x, z in ((X0 + 1, Z1 - 1), (X0 + 1, Z1 - 2), (X0 + 2, Z1 - 1), (X1 - 1, Z1 - 1), (X1 - 1, Z1 - 3)): cv.set(x, F + 1, z, 'barrel[facing=up]')
+    cv.set(X0 + 1, F + 2, Z1 - 1, 'barrel[facing=up]'); cv.set(X1 - 1, F + 2, Z1 - 1, 'skeleton_skull[rotation=6]')
+    cv.set(X1 - 1, F + 1, hz - 1, 'brewing_stand'); cv.set(X1 - 1, F + 1, hz, 'cauldron'); cv.set(X1 - 1, F + 1, hz + 2, 'cobweb')
+    cv.set(X0 + 1, F + 1, hz - 2, 'smithing_table'); cv.set(X0 + 1, F + 1, hz - 1, 'grindstone[face=floor,facing=east]'); cv.set(X0 + 1, F + 4, Z1 - 1, 'cobweb')
+    for x, z in ((X0 + 2, hz + 3), (X1 - 2, hz + 3), (X0 + 2, dz + 4), (X1 - 2, dz + 4)):
+        cv.set(x, F + 4, z, 'iron_chain[axis=y]'); cv.set(x, F + 3, z, 'soul_lantern[hanging=true]')
+    wall_sign(cv, hx + 1, F + 3, Z1 - 1, [('암시장', 'dark_purple'), ('', 'black'), ('여기서 본 건', 'white'), ('비밀이야', 'white')], facing='north', wood='dark_oak')
+    cv.marker(DEALER[0], DEALER[1], DEALER[2], ['bw', 'bw.lobby', 'bw.lobby.black'])
+
+def counter_ns(cv, x, y, z, tags):
+    """a double chest at (x, y, z) and (x + 1, y, z) looking south, with a marker on each half"""
+    cv.set(x, y, z, 'waxed_copper_chest[facing=south,type=right]'); cv.set(x + 1, y, z, 'waxed_copper_chest[facing=south,type=left]')
+    for xx in (x, x + 1): cv.marker(xx, y, z, tags)
 
 def emblem(cv, mid, x, y, z):
     """a small model of the map standing on the wall above its gate"""
@@ -295,6 +354,7 @@ def build(maps, seed=77):
     cv.paste(balloon('red'), -74, 14, 8); cv.paste(balloon('blue'), 74, 20, -8); cv.paste(balloon('yellow'), -64, 30, 34); cv.paste(balloon('lime'), 62, 12, 42)
     cv.marker(sx, 1, sz, ['bw', 'bw.lobby', 'bw.lobby.spawn'])
     upgrade_hall(cv)
+    black_market(cv)
     return cv, pads, (sx + 0.5, 1.0, sz + 0.5)
 
 if __name__ == '__main__':

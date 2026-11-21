@@ -66,7 +66,7 @@ def cup_base(dye):
         cv.set(sx * 7, 1, -3, T); cv.set(sx * 7, 2, -3, dye + '_stained_glass')
         cv.set(sx * 6, 1, -4, T); cv.set(sx * 6, 1, -2, T)
     bed(cv, dye, 0, 1, 9)
-    team_markers(cv, dye, spawn=(0, 1, -1), bedpos=(0, 1, 9), gen=(0, 0, -5), shop=(-6, 1, -3), upg=(6, 1, -3))
+    team_markers(cv, dye, spawn=(0, 1, -1), bedpos=(0, 1, 9), gen=(0, 0, -5), shop=(-6, 1, -3), upg=(6, 1, -3), dz2=-1)
     return cv
 
 def cake():

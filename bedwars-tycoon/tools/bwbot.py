@@ -73,6 +73,9 @@ class BwBot(Bot):
                     hid = b.varint()
                     self.dialogs.append(nbt(b) if hid == 0 else {'registry_id': hid - 1})
                 elif name == 'clear_dialog': self.cleared += 1
+                elif name == 'set_health':
+                    (hp,) = b.fmt('>f'); self.health = hp
+                    if hp <= 0: self._send('play', 'client_command', varint(0)); self.deaths = getattr(self, 'deaths', 0) + 1
                 elif name == 'system_chat':
                     c = nbt(b); overlay = b.take(1) != b'\x00'
                     self.chat.append(('bar ' if overlay else '') + flat(c))

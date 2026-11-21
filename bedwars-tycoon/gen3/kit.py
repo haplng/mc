@@ -331,11 +331,25 @@ def gen_shrine(cv, x, y, z, kind, post, roof_slab, h=4, lamp=None):
             put(cv, x + dx, y + h + 1, z + dz, gem if (dx, dz) == (0, 0) else roof_slab)
     if lamp: cv.set(x, y + h, z, lamp)
 
-def team_markers(cv, dye, spawn, bedpos, gen, shop, upg):
+def team_markers(cv, dye, spawn, bedpos, gen, shop, upg, dz2=-1):
+    """the team's markers, and the two shop counters: a double copper chest in front of each keeper (it opens as the 6-row shop window).
+    dz2: on which side of the counter block the second half of the chest goes."""
     tags = ['bw', 'bw.team', 'bw.t.' + dye]
     cv.marker(*spawn, tags + ['bw.spawn']); cv.marker(*bedpos, tags + ['bw.bed'])
     cv.marker(gen[0], gen[1] + 1, gen[2], tags + ['bw.gen', 'bw.gen.iron'])
     cv.marker(*shop, tags + ['bw.shop']); cv.marker(*upg, tags + ['bw.upgrade'])
+    for kind, npc, face in (('shop', shop, 'east'), ('team', upg, 'west')):
+        counter(cv, npc[0] + (1 if face == 'east' else -1), npc[1], npc[2], dz2, face, tags + ['bw.gui', 'bw.gui.' + kind])
+
+def counter(cv, x, y, z, dz2, face, tags):
+    """a double chest at (x, y, z) and (x, y, z + dz2) looking `face` (east or west), with a marker on each half"""
+    lo, hi = min(z, z + dz2), max(z, z + dz2)
+    left, right = (lo, hi) if face == 'east' else (hi, lo)             # the left half's partner is clockwise from where it looks
+    cv.set(x, y, left, f'waxed_copper_chest[facing={face},type=left]'); cv.set(x, y, right, f'waxed_copper_chest[facing={face},type=right]')
+    for zz in (lo, hi):
+        up = cv.get(x, y + 1, zz)
+        assert up is None or not __import__('check').full(up), ('a chest could not open under', up, (x, y + 1, zz))
+        cv.marker(x, y, zz, tags)
 
 def gem_marker(cv, x, y, z, kind):
     cv.marker(x, y + 1, z, ['bw', 'bw.gen', 'bw.gen.' + kind])

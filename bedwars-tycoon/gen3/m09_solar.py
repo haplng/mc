@@ -54,7 +54,7 @@ def planet_base(dye):
             for y in (1, 2): cv.set(sx * 5, y, z, 'white_concrete')
         cv.set(sx * 4, 1, -4, T)
     bed(cv, dye, 0, 1, 8)
-    team_markers(cv, dye, spawn=(0, 1, -1), bedpos=(0, 1, 8), gen=(0, 0, -5), shop=(-5, 1, -4), upg=(5, 1, -4))
+    team_markers(cv, dye, spawn=(0, 1, -1), bedpos=(0, 1, 8), gen=(0, 0, -5), shop=(-5, 1, -4), upg=(5, 1, -4), dz2=1)
     return cv
 
 def sun():

@@ -58,7 +58,7 @@ def rook_base(dye):
         cv.set(sx * 5, 3, -7, None)                                       # head room for the name: the arrow slit above starts one block lower
         cv.set(sx * 4, 1, -7, T)
     bed(cv, dye, 0, 1, 9)
-    team_markers(cv, dye, spawn=(0, 1, -4), bedpos=(0, 1, 9), gen=(0, 0, -8), shop=(-5, 1, -7), upg=(5, 1, -7))
+    team_markers(cv, dye, spawn=(0, 1, -4), bedpos=(0, 1, 9), gen=(0, 0, -8), shop=(-5, 1, -7), upg=(5, 1, -7), dz2=1)
     return cv
 
 def board():

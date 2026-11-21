@@ -202,6 +202,7 @@ def markers(cv, label=''):
     for (x, y, z), t in cv.ents:
         tags = [str(v) for v in t.get('Tags', [])]
         bx, by, bz = math.floor(x), math.floor(y), math.floor(z)
+        if 'bw.gui' in tags: continue                                  # sits in its chest
         if 'bw.bed' in tags:
             if 'bed' not in (cv.get(bx, by, bz) or ''): bad.append((tags[-1], (bx, by, bz), 'not on the bed'))
             continue
