@@ -12,271 +12,471 @@
    85,
    158
   ],
-  "blocks": 256694,
+  "blocks": 256919,
   "center": [
    0,
    64,
    0
+  ],
+  "box": [
+   -89,
+   10,
+   -59,
+   90,
+   96,
+   100
   ]
  },
  {
-  "id": "sakura",
-  "name": "벚꽃 정원",
+  "id": "tea",
+  "name": "티타임",
   "place": [
-   506,
-   30,
-   -94
+   513,
+   51,
+   -87
   ],
   "size": [
-   189,
-   52,
-   189
+   175,
+   31,
+   175
   ],
-  "blocks": 94133,
+  "blocks": 28198,
   "center": [
    600,
    64,
    0
   ],
+  "box": [
+   505,
+   29,
+   -95,
+   695,
+   82,
+   95
+  ],
   "tp": [
-   678.5,
-   65,
-   32.5,
-   112.5
-  ]
+   675.5,
+   65.0,
+   -30.5,
+   68.0
+  ],
+  "gaps": {
+   "base-base": 34,
+   "base-diamond": 23,
+   "base-extra": 21,
+   "base-mid": 49,
+   "diamond-diamond": 48,
+   "diamond-extra": 20,
+   "diamond-mid": 20,
+   "extra-extra": 52,
+   "extra-mid": 22
+  }
  },
  {
-  "id": "oasis",
-  "name": "사막 오아시스",
+  "id": "chess",
+  "name": "체스",
   "place": [
-   903,
-   27,
-   -97
+   907,
+   50,
+   -93
   ],
   "size": [
-   195,
-   49,
-   195
+   187,
+   35,
+   187
   ],
-  "blocks": 91073,
+  "blocks": 46596,
   "center": [
    1000,
    64,
    0
   ],
+  "box": [
+   902,
+   26,
+   -98,
+   1098,
+   85,
+   98
+  ],
   "tp": [
-   1081.5,
-   65,
-   34.5,
-   112.9
-  ]
+   1083.5,
+   65.0,
+   -26.5,
+   72.4
+  ],
+  "gaps": {
+   "base-base": 32,
+   "base-diamond": 19,
+   "base-extra": 28,
+   "base-mid": 41,
+   "diamond-diamond": 49,
+   "diamond-extra": 63,
+   "diamond-mid": 15,
+   "extra-extra": 132,
+   "extra-mid": 62
+  }
  },
  {
-  "id": "frost",
-  "name": "얼음 마을",
+  "id": "circus",
+  "name": "서커스",
   "place": [
-   1295,
-   32,
-   -105
+   1302,
+   51,
+   -98
   ],
   "size": [
-   211,
-   54,
-   211
+   197,
+   33,
+   197
   ],
-  "blocks": 109639,
+  "blocks": 62833,
   "center": [
    1400,
    64,
    0
   ],
+  "box": [
+   1294,
+   31,
+   -106,
+   1506,
+   86,
+   106
+  ],
   "tp": [
-   1485.5,
-   65,
-   35.5,
-   112.5
-  ]
+   1483.5,
+   65.0,
+   -35.5,
+   67.0
+  ],
+  "gaps": {
+   "base-base": 42,
+   "base-extra": 35,
+   "base-mid": 22,
+   "extra-extra": 46,
+   "extra-mid": 18,
+   "mid-mid": 0
+  }
  },
  {
-  "id": "mushroom",
-  "name": "버섯 숲",
+  "id": "train",
+  "name": "기차",
   "place": [
-   1692,
-   36,
-   -108
+   1697,
+   54,
+   -103
   ],
   "size": [
-   217,
-   45,
-   217
+   207,
+   24,
+   207
   ],
-  "blocks": 111070,
+  "blocks": 68170,
   "center": [
    1800,
    64,
    0
   ],
+  "box": [
+   1691,
+   35,
+   -109,
+   1909,
+   81,
+   109
+  ],
   "tp": [
-   1889.5,
-   65,
-   37.5,
-   112.7
-  ]
+   1893.5,
+   65.0,
+   -31.5,
+   71.4
+  ],
+  "gaps": {
+   "base-base": 34,
+   "base-mid": 21,
+   "mid-mid": 1
+  }
  },
  {
-  "id": "harbour",
-  "name": "등대 항구",
+  "id": "stadium",
+  "name": "축구장",
   "place": [
-   2089,
-   33,
-   -111
+   2095,
+   43,
+   -81
   ],
   "size": [
-   223,
-   59,
-   223
+   211,
+   40,
+   163
   ],
-  "blocks": 108036,
+  "blocks": 120018,
   "center": [
    2200,
    64,
    0
   ],
+  "box": [
+   2088,
+   32,
+   -112,
+   2312,
+   92,
+   112
+  ],
   "tp": [
-   2292.5,
-   65,
-   38.5,
-   112.6
-  ]
+   2108.5,
+   65.0,
+   -62.5,
+   -55.7
+  ],
+  "gaps": {
+   "base-base": 34,
+   "base-diamond": 18,
+   "base-extra": 49,
+   "base-mid": 22,
+   "diamond-diamond": 52,
+   "diamond-extra": 22,
+   "diamond-mid": 14,
+   "extra-extra": 124,
+   "extra-mid": 18
+  }
  },
  {
-  "id": "autumn",
-  "name": "가을 농장",
+  "id": "library",
+  "name": "도서관",
   "place": [
-   2484,
-   35,
-   -116
+   2489,
+   47,
+   -111
   ],
   "size": [
-   233,
-   50,
-   233
+   223,
+   36,
+   223
   ],
-  "blocks": 132059,
+  "blocks": 103342,
   "center": [
    2600,
    64,
    0
   ],
+  "box": [
+   2483,
+   34,
+   -117,
+   2717,
+   85,
+   117
+  ],
   "tp": [
-   2696.5,
-   65,
-   40.5,
-   112.8
-  ]
+   2703.5,
+   65.0,
+   -27.5,
+   75.1
+  ],
+  "gaps": {
+   "base-base": 30,
+   "base-diamond": 20,
+   "base-extra": 25,
+   "base-mid": 56,
+   "diamond-diamond": 34,
+   "diamond-extra": 22,
+   "diamond-mid": 21,
+   "extra-extra": 98,
+   "extra-mid": 43
+  }
  },
  {
-  "id": "nether",
-  "name": "네더 요새",
+  "id": "turtle",
+  "name": "거북",
   "place": [
-   2881,
-   28,
-   -119
+   2884,
+   39,
+   -116
   ],
   "size": [
-   239,
-   53,
-   239
+   233,
+   39,
+   233
   ],
-  "blocks": 146685,
+  "blocks": 88677,
   "center": [
    3000,
    64,
    0
   ],
+  "box": [
+   2880,
+   27,
+   -120,
+   3120,
+   81,
+   120
+  ],
   "tp": [
-   3100.5,
-   65,
-   41.5,
-   112.4
-  ]
+   3103.5,
+   65.0,
+   -37.5,
+   70.1
+  ],
+  "gaps": {
+   "base-base": 32,
+   "base-diamond": 19,
+   "base-extra": 25,
+   "base-mid": 44,
+   "diamond-diamond": 64,
+   "diamond-extra": 32,
+   "diamond-mid": 13,
+   "extra-extra": 85,
+   "extra-mid": 21
+  }
  },
  {
-  "id": "jungle",
-  "name": "정글 신전",
+  "id": "windmill",
+  "name": "풍차",
   "place": [
-   3277,
-   31,
-   -123
+   3280,
+   38,
+   -121
   ],
   "size": [
-   247,
-   49,
-   247
+   242,
+   58,
+   243
   ],
-  "blocks": 153826,
+  "blocks": 140351,
   "center": [
    3400,
    64,
    0
   ],
+  "box": [
+   3276,
+   30,
+   -124,
+   3524,
+   96,
+   124
+  ],
   "tp": [
-   3503.5,
-   65,
-   43.5,
-   112.8
-  ]
+   3499.5,
+   65.0,
+   -37.5,
+   69.3
+  ],
+  "gaps": {
+   "base-base": 49,
+   "base-diamond": 24,
+   "base-extra": 27,
+   "base-mid": 59,
+   "diamond-diamond": 148,
+   "diamond-extra": 63,
+   "diamond-mid": 73,
+   "extra-extra": 59,
+   "extra-mid": 20
+  }
  },
  {
-  "id": "castle",
-  "name": "천공의 성",
+  "id": "solar",
+  "name": "태양계",
   "place": [
    3673,
-   26,
+   35,
    -127
   ],
   "size": [
    255,
-   64,
+   41,
    255
   ],
-  "blocks": 147255,
+  "blocks": 60600,
   "center": [
    3800,
    64,
    0
   ],
+  "box": [
+   3672,
+   25,
+   -128,
+   3928,
+   90,
+   128
+  ],
   "tp": [
-   3907.5,
-   65,
-   44.5,
-   112.5
-  ]
+   3910.5,
+   65.0,
+   -43.5,
+   68.5
+  ],
+  "gaps": {
+   "base-base": 52,
+   "base-diamond": 23,
+   "base-extra": 29,
+   "base-mid": 59,
+   "base-rock": 34,
+   "diamond-diamond": 96,
+   "diamond-extra": 3,
+   "diamond-mid": 24,
+   "diamond-rock": 19,
+   "extra-extra": 61,
+   "extra-mid": 12,
+   "extra-rock": 15,
+   "mid-mid": 0,
+   "mid-rock": 7,
+   "rock-rock": 0
+  }
  },
  {
-  "id": "end",
-  "name": "엔드 성채",
+  "id": "pirate",
+  "name": "해적",
   "place": [
-   4068,
-   29,
-   -132
+   4067,
+   35,
+   -133
   ],
   "size": [
-   265,
-   60,
-   265
+   267,
+   58,
+   267
   ],
-  "blocks": 144930,
+  "blocks": 105743,
   "center": [
    4200,
    64,
    0
   ],
+  "box": [
+   4066,
+   28,
+   -134,
+   4334,
+   93,
+   134
+  ],
   "tp": [
-   4311.5,
-   65,
-   46.5,
-   112.6
-  ]
+   4318.5,
+   65.0,
+   -28.5,
+   76.5
+  ],
+  "gaps": {
+   "base-base": 46,
+   "base-diamond": 23,
+   "base-extra": 27,
+   "base-mid": 52,
+   "base-rock": 34,
+   "diamond-diamond": 89,
+   "diamond-extra": 38,
+   "diamond-mid": 15,
+   "diamond-rock": 6,
+   "extra-extra": 105,
+   "extra-mid": 41,
+   "extra-rock": 36,
+   "mid-rock": 13,
+   "rock-rock": 20
+  }
  }
 ]

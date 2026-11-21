@@ -153,7 +153,7 @@ def hall_inside(cv, hx0, hx1, hz0, hz1):
         for y in (10, 9): cv.set(x, y, z, 'iron_chain[axis=y]')
         cv.set(x, 8, z, 'lantern[hanging=true]')
         for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1)): cv.set(x + dx, 8, z + dz, 'iron_chain[axis=x]' if dx else 'iron_chain[axis=z]')
-        for dx, dz in ((2, 0), (-2, 0), (0, 2), (0, -2)): cv.set(x + dx, 8, z + dz, 'lantern[hanging=false]')
+        for dx, dz in ((2, 0), (-2, 0), (0, 2), (0, -2)): cv.set(x + dx, 8, z + dz, 'dark_oak_fence'); cv.set(x + dx, 7, z + dz, 'lantern[hanging=true]')
     for x, z in ((hx0 + 1, hz1 - 1), (hx1 - 1, hz1 - 1), (hx0 + 1, hz0 + 1), (hx1 - 1, hz0 + 1)):
         cv.set(x, 1, z, 'potted_azalea_bush')
     for x in (hx0 + 1, hx1 - 1):
@@ -238,7 +238,7 @@ def build_lobby(map_themes, seed=7):
         rot = round(((math.degrees(math.atan2(math.cos(a), -(math.sin(a)))) ) % 360) / 22.5)
         fx, fz = -math.cos(a), -math.sin(a)                                 # facing the plaza
         rot = round((math.degrees(math.atan2(-fx, fz)) % 360) / 22.5) % 16
-        sign(cv, px, 2, pz, [(f"{i + 1}. {mt['name']}", 'gold'), (f"{mt.get('size', '?')}x{mt.get('size', '?')}", 'white'), ('8팀', 'white'), ('▶ 들어가기', 'aqua')], rotation=rot)
+        sign(cv, px, 2, pz, [(f"{i + 1}. {mt['name']}", 'gold'), (mt.get('size_text') or f"{mt.get('size', '?')}x{mt.get('size', '?')}", 'white'), ('8팀', 'white'), ('▶ 들어가기', 'aqua')], rotation=rot)
     # trees and flowers round the outside
     rng = cv.rng
     for k in range(40):
