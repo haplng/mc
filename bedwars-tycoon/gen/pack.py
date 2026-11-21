@@ -58,27 +58,35 @@ def main(preview=True):
         # install steps: forceload, wait until loaded, clear old entities, place, release
         nxt = items[k + 1][0] if k + 1 < len(items) else None
         midx, midz = (px + ax) // 2, (pz + az) // 2
-        fn(f'install/{iid}/load', [f'forceload add {px} {pz} {ax} {az}', f'schedule function bw:install/{iid}/try 40t'])
+        # forceload takes at most 256 chunks per command: split the area in two
+        halves = [(px, pz, midx, az), (midx + 1, pz, ax, az)]
+        fl_add = [f'forceload add {a} {b} {c} {d}' for a, b, c, d in halves]
+        fl_rem = [f'forceload remove {a} {b} {c} {d}' for a, b, c, d in halves]
+        for a, b, c, d in halves: assert ((c >> 4) - (a >> 4) + 1) * ((d >> 4) - (b >> 4) + 1) <= 256
+        fn(f'install/{iid}/load', [*fl_add, f'schedule function bw:install/{iid}/try 40t'])
         fn(f'install/{iid}/try', [
-            f'forceload add {px} {pz} {ax} {az}',
+            *fl_add,
             *[f'execute unless loaded {x} {cy} {z} run return run schedule function bw:install/{iid}/try 20t'
               for x, z in ((px, pz), (ax, pz), (px, az), (ax, az), (midx, midz))],
             f'kill @e[type=!player,tag=bw,x={px},y={py - 2},z={pz},dx={size[0]},dy={size[1] + 4},dz={size[2]}]',
             f'place template bw:{iid} {px} {py} {pz}',
-            f'forceload remove {px} {pz} {ax} {az}',
+            *fl_rem,
             f'scoreboard players set #installed bw {k + 1}',
+            *(['execute if score #first bw matches 1 as @a run function bw:go/lobby', 'effect clear @a minecraft:slow_falling'] if iid == 'lobby' else []),
             tellraw(('[배드워즈] ', 'gold'), (f'{name} 설치 완료 ({k + 1}/{len(items)})', 'gray')),
             f'schedule function bw:install/{nxt}/load 10t' if nxt else 'function bw:install/done'])
     lob = [p for p, t in lcv.ents if 'bw.lobby.spawn' in [str(v) for v in t['Tags']]][0]
     LS = (LOBBY[0] + lob[0], LOBBY[1] + lob[1], LOBBY[2] + lob[2])
     fn('install/start', ['scoreboard players set #installed bw 0', tellraw(('[배드워즈] ', 'gold'), ('맵 10개와 로비를 설치할게. 1분쯤 걸려.', 'yellow')), f'function bw:install/{items[0][0]}/load'])
-    fn('install/done', [f'setworldspawn {math.floor(LS[0])} {math.floor(LS[1])} {math.floor(LS[2])}',
+    fn('install/done', ['scoreboard players set #first bw 0', f'setworldspawn {math.floor(LS[0])} {math.floor(LS[1])} {math.floor(LS[2])}',
                         tellraw(('[배드워즈] ', 'gold'), ('설치 끝! ', 'green'), ('/function bw:lobby', 'aqua'), (' 로 로비에 갈 수 있어.', 'gray'))])
     # teleports
     fn('lobby', ['execute as @s[type=player] run function bw:go/lobby'])
     fn('go/lobby', [f'tp @s {LS[0]} {LS[1]} {LS[2]} 180 0', 'scoreboard players set @s lobby 0',
                     'title @s actionbar ' + json.dumps({'text': '로비', 'color': 'gold'}, ensure_ascii=False)])
-    tick = ['scoreboard players enable @a lobby', 'execute as @a[scores={lobby=1..}] run function bw:go/lobby']
+    tick = ['scoreboard players enable @a lobby', 'execute as @a[scores={lobby=1..}] run function bw:go/lobby',
+            # until the lobby exists (first start of a void world) nobody falls
+            'execute unless score #installed bw matches 1.. run effect give @a minecraft:slow_falling 2 0 true']
     for rec, pad in zip(info[1:], pads):
         x, y, z, yaw = rec['tp']
         fn(f"go/{rec['id']}", [f'tp @s {x} {y} {z} {yaw} 10',
@@ -91,7 +99,8 @@ def main(preview=True):
     fn('tick', tick)
     # first load in a world: install by itself (a later /reload does not reinstall; /function bw:install/start does)
     fn('load', ['scoreboard objectives add lobby trigger', 'scoreboard objectives add bw dummy',
-                'execute unless score #installed bw matches 0.. run schedule function bw:install/start 60t'])
+                'execute unless score #installed bw matches 0.. run scoreboard players set #first bw 1',
+                'execute unless score #installed bw matches 0.. run schedule function bw:install/start 1t'])
     os.makedirs(f'{PACK}/data/minecraft/tags/function', exist_ok=True)
     json.dump({'values': ['bw:load']}, open(f'{PACK}/data/minecraft/tags/function/load.json', 'w'))
     json.dump({'values': ['bw:tick']}, open(f'{PACK}/data/minecraft/tags/function/tick.json', 'w'))

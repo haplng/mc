@@ -2,6 +2,9 @@
 import math
 from canvas import Canvas, rot_xz
 import parts as PT
+import interior as IN
+from scipy.spatial import cKDTree
+import numpy as np
 
 TEAMS = [('red', 'red'), ('blue', 'blue'), ('green', 'lime'), ('yellow', 'yellow'),
          ('aqua', 'cyan'), ('white', 'white'), ('pink', 'pink'), ('gray', 'gray')]
@@ -36,11 +39,8 @@ def cottage(cv, th, dye, x0=-5, x1=5, z0=-14, z1=-8, h=4):
     # roof
     rs = P['roof_stair']; rf = P['roof_full']
     PT.roof_gable(cv, x0, x1, z0, z1, h + 1, rs, rf, trim=tc(dye, P.get('trim', 'wool')), axis='x')
-    # inside: carpet in team colour, a lantern
-    for x in range(x0 + 1, x1):
-        for z in range(z0 + 1, z1):
-            if (x + z) % 2 == 0: cv.set(x, 1, z, tc(dye, 'carpet'))
     cv.set(mid, h, (z0 + z1) // 2, 'lantern[hanging=true]')
+    IN.room(cv, x0 + 1, x1 - 1, z0 + 1, z1 - 1, 1, dye, th.get('style', 'home'), th.get('wood', 'oak'), th.get('pots', 'home'), door=(mid, z1 - 1), h=h - 1)
 
 def team_base(th, dye, seed, size=1.0):
     cv = Canvas(seed)
@@ -77,6 +77,7 @@ def team_base(th, dye, seed, size=1.0):
     # house (theme may replace it) on flattened ground
     PT.flatten(cv, hm, -7, -16, 7, -7, 0, th)
     (th.get('house_fn') or cottage)(cv, th, dye)
+    IN.forge(cv, th, dye)
     # decoration around the edge
     rng = cv.rng
     spots = [(-10, -4), (10, -5), (-9, 4), (9, 5), (-6, -16), (6, -16), (-11, -11), (11, -11)]
@@ -113,6 +114,7 @@ def diamond_island(th, seed, size=1.0):
     r = 8 * size
     hm = PT.island(cv, 0, 0, 0, r, r * 0.9, th['depth_dia'] * size, th, seed, flat=0.5, hill=1.2)
     gen_ring(cv, 0, 0, 0, 'diamond_block', th.get('genpad', 'polished_andesite'), cv.pick(th['plaza']))
+    IN.shrine(cv, th, 0, 0, 'diamond_block', 'light_blue_stained_glass')
     cv.marker(0, 1, 0, ['bw', 'bw.gen', 'bw.gen.diamond'])
     th['dia'](cv, hm, seed)
     PT.flora(cv, hm, th, th.get('flora_density', 0.2) * 0.8, avoid=lambda x, z: abs(x) <= 2 and abs(z) <= 2)
@@ -130,35 +132,61 @@ def mid_island(th, seed, Rm):
     cv = Canvas(seed)
     hm = PT.island(cv, 0, 0, 0, Rm, Rm * 0.95, th['depth_mid'], th, seed, flat=0.75, hill=1.5)
     PT.flatten(cv, hm, -int(Rm * 0.55), -int(Rm * 0.55), int(Rm * 0.55), int(Rm * 0.55), 0, th)
-    e = int(round(Rm * 0.52))
+    e = int(round(Rm * 0.62))
     em = [(e, 0), (-e, 0), (0, e), (0, -e)]
     for i, (x, z) in enumerate(em):
         gen_ring(cv, x, 0, z, 'emerald_block', th.get('genpad', 'polished_andesite'), cv.pick(th['plaza']))
         cv.marker(x, 1, z, ['bw', 'bw.gen', 'bw.gen.emerald'])
     th['mid'](cv, hm, seed, Rm, em)
+    for (x, z) in em:      # emerald shrines go in last so nothing of the centrepiece sits inside them
+        for dx in range(-3, 4):
+            for dz in range(-3, 4):
+                for y in range(1, 8): cv.set(x + dx, y, z + dz, None)
+        gen_ring(cv, x, 0, z, 'emerald_block', th.get('genpad', 'polished_andesite'), cv.pick(th['plaza']))
+        IN.shrine(cv, th, x, z, 'emerald_block', 'lime_stained_glass')
     PT.flora(cv, hm, th, th.get('flora_density', 0.2), avoid=lambda x, z: any(abs(x - a) <= 2 and abs(z - b) <= 2 for a, b in em))
     return cv
 
 # ------------------------------------------------------------------ whole map
+def footprint(c, dx, dz, k):
+    pts = set()
+    for (x, y, z) in c.b:
+        rx, rz = rot_xz(x, z, k); pts.add((rx + dx, rz + dz))
+    return pts
+
 def build_map(th, R, seed=1, Y0=0):
     cv = Canvas(seed)
-    size = 0.92 + (R - 62) / 36 * 0.2           # islands grow a little with the map
+    cv.feet = []                                # 2D footprints of every island, to measure the gaps
+    size = 0.95 + (R - 84) / 36 * 0.15          # islands grow a little with the map
     for k, (team, dye) in enumerate(TEAMS):
         a = math.radians(22.5 + 45 * k)
         bx, bz = round(R * math.cos(a)), round(R * math.sin(a))
         inward = (-math.cos(a), -math.sin(a))
         best = max(range(4), key=lambda r: (rot_xz(0, 1, r)[0] * inward[0] + rot_xz(0, 1, r)[1] * inward[1]))
         base = team_base(th, dye, seed * 7 + 1, size)          # same seed: all bases identical except colours
-        cv.overlap = getattr(cv, 'overlap', 0) + cv.paste(base, bx, Y0, bz, best)
+        cv.overlap = getattr(cv, 'overlap', 0) + cv.paste(base, bx, Y0, bz, best); cv.feet.append(footprint(base, bx, bz, best))
     Rd = round(R * 0.53)
     for k in range(4):
         a = math.radians(90 * k)
-        cv.overlap = getattr(cv, 'overlap', 0) + cv.paste(diamond_island(th, seed * 11 + k, size), round(Rd * math.cos(a)), Y0 + th.get('dia_dy', -1), round(Rd * math.sin(a)), k)
-    if R >= 70:
-        Rs = round(R * 0.62)
-        for k in range(4):
-            a = math.radians(45 + 90 * k)
-            cv.overlap = getattr(cv, 'overlap', 0) + cv.paste(side_island(th, seed * 13 + k, size), round(Rs * math.cos(a)), Y0 + th.get('side_dy', 2), round(Rs * math.sin(a)), k)
-    Rm = int(round(R * 0.3))
-    cv.overlap = getattr(cv, 'overlap', 0) + cv.paste(mid_island(th, seed * 17, Rm), 0, Y0 + th.get('mid_dy', 1), 0, 0)
+        isl = diamond_island(th, seed * 11 + k, size); px, pz = round(Rd * math.cos(a)), round(Rd * math.sin(a))
+        cv.overlap = getattr(cv, 'overlap', 0) + cv.paste(isl, px, Y0 + th.get('dia_dy', -1), pz, k); cv.feet.append(footprint(isl, px, pz, k))
+    Rs = round(R * 0.645)
+    for k in range(4):
+        a = math.radians(45 + 90 * k)
+        isl = side_island(th, seed * 13 + k, size); px, pz = round(Rs * math.cos(a)), round(Rs * math.sin(a))
+        cv.overlap = getattr(cv, 'overlap', 0) + cv.paste(isl, px, Y0 + th.get('side_dy', 2), pz, k); cv.feet.append(footprint(isl, px, pz, k))
+    Rm = int(round(17 + (R - 84) * 0.25))
+    isl = mid_island(th, seed * 17, Rm)
+    cv.overlap = getattr(cv, 'overlap', 0) + cv.paste(isl, 0, Y0 + th.get('mid_dy', 1), 0, 0); cv.feet.append(footprint(isl, 0, 0, 0))
     return cv
+
+def gaps(cv):
+    """smallest open-air distance between any two islands (seen from above)"""
+    trees = [cKDTree(np.array(sorted(f))) for f in cv.feet]
+    arrs = [np.array(sorted(f)) for f in cv.feet]
+    best = 1e9
+    for i in range(len(arrs)):
+        for j in range(i + 1, len(arrs)):
+            d, _ = trees[j].query(arrs[i], k=1)
+            best = min(best, float(d.min()))
+    return best

@@ -16,7 +16,7 @@ def build(ids=None, preview=True):
         org, size, n, npal = cv.save_structure(f"{OUT}/structures/{th['id']}.nbt")
         info[th['id']] = dict(name=th['name'], R=th['R'], origin=[int(v) for v in org], size=[int(v) for v in size], blocks=n, palette=npal,
                               markers=len(cv.ents))
-        print(f"{i+1:2d} {th['id']:9s} R{th['R']} size {size[0]}x{size[2]} h{size[1]} blocks {n} palette {npal} markers {len(cv.ents)} bad {len(bad)} marker problems {len(mb)} overlap {getattr(cv, 'overlap', 0)} {time.time()-t:.1f}s", flush=True)
+        print(f"{i+1:2d} {th['id']:9s} R{th['R']} size {size[0]}x{size[2]} h{size[1]} blocks {n} palette {npal} markers {len(cv.ents)} bad {len(bad)} marker problems {len(mb)} overlap {getattr(cv, 'overlap', 0)} min gap {bwmap.gaps(cv):.0f} {time.time()-t:.1f}s", flush=True)
         if preview:
             bl = {p: (s.split('[')[0], 0) for p, s in cv.b.items()}
             render.render(bl, f"{OUT}/preview/{th['id']}_top.png", f"{OUT}/preview/{th['id']}_iso.png", 2)

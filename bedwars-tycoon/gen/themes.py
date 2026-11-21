@@ -2,6 +2,7 @@
 import math
 import parts as PT
 from parts import LEAF
+import interior as IN
 
 STONE = [('stone', 5), ('andesite', 3), ('tuff', 2), ('cobblestone', 1), ('gravel', 1), ('dirt', 1)]
 
@@ -147,9 +148,8 @@ def desert_house(cv, th, dye, x0=-5, x1=5, z0=-14, z1=-8, h=4):
             if dx * dx + dz * dz <= 5: cv.set(mid + dx, h + 1, (z0 + z1) // 2 + dz, f'{dye}_terracotta')
             if dx * dx + dz * dz <= 2: cv.set(mid + dx, h + 2, (z0 + z1) // 2 + dz, f'{dye}_terracotta')
     cv.set(mid, h + 3, (z0 + z1) // 2, 'gold_block')
-    for x in range(x0 + 1, x1):
-        for z in range(z0 + 1, z1):
-            if (x + z) % 3 == 0: cv.set(x, 1, z, f'{dye}_carpet')
+    IN.room(cv, x0 + 1, x1 - 1, z0 + 1, z1 - 1, 1, dye, 'desert', 'jungle', 'desert', door=(mid, z1 - 1), h=h - 1)
+    cv.set(mid, h, (z0 + z1) // 2, 'lantern[hanging=true]')
 
 def palm_tree(cv, x, y, z, seed):
     PT.palm(cv, x, y, z, 6 + seed % 3, [(1, 0), (0, 1), (-1, 0), (0, -1)][seed % 4], seed)
@@ -268,6 +268,7 @@ def mush_house(cv, th, dye, cz=-11):
     for dx, dz, dy in ((2, 3, 2), (-3, 1, 1), (1, -3, 2), (-1, 4, 0), (3, -2, 1)):
         cv.set(dx, H + 1 + dy, cz + dz, f'{dye}_concrete')
     cv.set(0, H, cz, 'shroomlight')
+    IN.round_room(cv, 0, cz, R - 1, 1, dye, 'mush', 'mush', door_dir=(0, 1))
 
 def mush_mid(cv, hm, seed, Rm, em):
     PT.mushroom(cv, 0, 1, 0, 13, 8, 'red')
@@ -518,6 +519,8 @@ def tower_house(cv, th, dye):
     disc(cv, 0, 0, -11, 2, 'smooth_quartz')
     for dx, dz in ((-5, -9), (5, -9)):
         castle_tower(cv, dx, 0, dz, 4, 1, f'{dye}_concrete')
+    IN.round_room(cv, 0, -11, 2, 1, dye, 'castle', 'castle', door_dir=(0, 1))
+    cv.set(0, 6, -11, 'lantern[hanging=true]')
 
 def castle_mid(cv, hm, seed, Rm, em):
     w = int(Rm * 0.32)
@@ -616,7 +619,7 @@ def end_dia(cv, hm, seed):
 def T(**k): return k
 
 THEMES = [
-    T(id='sakura', name='벚꽃 정원', R=62,
+    T(id='sakura', name='벚꽃 정원', R=84, style='home', wood='cherry', pots='sakura',
       top=[('grass_block', 8), ('moss_block', 2)], sub=[('dirt', 4), ('coarse_dirt', 1)], under=STONE, tip=[('tuff', 2), ('andesite', 1), ('cobblestone', 1)],
       hang={'body': 'hanging_roots', 'end': 'hanging_roots'},
       flora=[('pink_petals[facing=north,flower_amount=4]', 4), ('pink_petals[facing=east,flower_amount=2]', 2), ('short_grass', 4), ('fern', 1), ('lily_of_the_valley', 1), ('azure_bluet', 1), ('peony|tall', 1)],
@@ -624,7 +627,7 @@ THEMES = [
       house=dict(wall='cherry_planks', frame='dark_oak_log', floor='dark_oak_planks', roof_stair='deepslate_tile_stairs', roof_full='deepslate_tiles'),
       tree=sakura_tree, rock=[('stone', 3), ('mossy_cobblestone', 2), ('andesite', 1)], mid=sakura_mid, dia=sakura_dia,
       depth_base=20, depth_dia=15, depth_mid=28, flora_density=0.28, post='dark_oak_fence'),
-    T(id='oasis', name='사막 오아시스', R=66,
+    T(id='oasis', name='사막 오아시스', R=88, style='desert', wood='jungle', pots='desert',
       top=[('sand', 6), ('sandstone', 1), ('smooth_sandstone', 1)], sub=[('sandstone', 3), ('sand', 1)],
       under=[('sandstone', 4), ('smooth_sandstone', 2), ('terracotta', 1), ('orange_terracotta', 1), ('yellow_terracotta', 1)],
       tip=[('red_sandstone', 2), ('terracotta', 1)], flora_on=('sand',),
@@ -633,7 +636,7 @@ THEMES = [
       house=dict(wall='smooth_sandstone', frame='cut_sandstone', floor='smooth_sandstone', roof_stair='sandstone_stairs', roof_full='cut_sandstone'),
       house_fn=desert_house, tree=palm_tree, rock=[('sandstone', 2), ('terracotta', 1), ('orange_terracotta', 1)], mid=oasis_mid, dia=oasis_dia,
       depth_base=19, depth_dia=15, depth_mid=27, flora_density=0.10, post='sandstone_wall', genpad='cut_sandstone'),
-    T(id='frost', name='얼음 마을', R=70,
+    T(id='frost', name='얼음 마을', R=92, style='frost', wood='spruce', pots='frost',
       top=[('snow_block', 8), ('white_concrete_powder', 1)], sub=[('snow_block', 1), ('dirt', 2), ('packed_ice', 1)],
       under=[('stone', 4), ('packed_ice', 2), ('andesite', 2), ('diorite', 1), ('blue_ice', 1)], tip=[('packed_ice', 2), ('blue_ice', 1)],
       flora_on=('snow_block',), flora=[('snow[layers=1]', 3), ('snow[layers=2]', 1)],
@@ -641,7 +644,7 @@ THEMES = [
       house=dict(wall='spruce_planks', frame='spruce_log', floor='spruce_planks', roof_stair='spruce_stairs', roof_full='spruce_planks'),
       house_fn=cabin, tree=spruce_snow, rock=[('stone', 2), ('packed_ice', 1), ('snow_block', 1)], mid=frost_mid, dia=frost_dia,
       depth_base=20, depth_dia=15, depth_mid=28, flora_density=0.12, genpad='polished_diorite'),
-    T(id='mushroom', name='버섯 숲', R=74,
+    T(id='mushroom', name='버섯 숲', R=96, style='mush', wood='spruce', pots='mush',
       top=[('mycelium', 5), ('podzol', 2), ('moss_block', 1)], sub=[('dirt', 3), ('coarse_dirt', 1)],
       under=[('stone', 3), ('tuff', 2), ('dirt', 2), ('coarse_dirt', 1), ('andesite', 1)], tip=[('tuff', 2), ('stone', 1)],
       hang={'body': 'cave_vines_plant[berries=true]', 'end': 'cave_vines[age=0,berries=true]'},
@@ -650,7 +653,7 @@ THEMES = [
       house=dict(wall='mushroom_stem', frame='mushroom_stem', floor='spruce_planks', roof_stair='spruce_stairs', roof_full='red_mushroom_block'),
       house_fn=mush_house, tree=mush_tree, rock=[('tuff', 2), ('mossy_cobblestone', 1)], mid=mush_mid, dia=mush_dia,
       depth_base=21, depth_dia=16, depth_mid=29, flora_density=0.16, post='spruce_fence', genpad='mud_bricks'),
-    T(id='harbour', name='등대 항구', R=78,
+    T(id='harbour', name='등대 항구', R=100, style='harbour', wood='spruce', pots='home',
       top=[('grass_block', 5), ('sand', 3), ('coarse_dirt', 1)], sub=[('dirt', 3), ('sand', 1)],
       under=[('stone', 3), ('sandstone', 1), ('prismarine', 1), ('andesite', 2), ('gravel', 1)], tip=[('prismarine', 1), ('dark_prismarine', 1), ('stone', 1)],
       flora=[('short_grass', 5), ('tall_grass|tall', 1), ('dandelion', 1), ('sunflower|tall', 1)],
@@ -658,7 +661,7 @@ THEMES = [
       house=dict(wall='birch_planks', frame='stripped_spruce_log', floor='spruce_planks', roof_stair='dark_oak_stairs', roof_full='dark_oak_planks', stripe='concrete', trim='concrete'),
       tree=beach_tree, rock=[('stone', 2), ('andesite', 1), ('sandstone', 1)], mid=harbour_mid, dia=harbour_dia,
       depth_base=20, depth_dia=15, depth_mid=29, flora_density=0.2, genpad='smooth_stone'),
-    T(id='autumn', name='가을 농장', R=82,
+    T(id='autumn', name='가을 농장', R=104, style='farm', wood='oak', pots='home',
       top=[('grass_block', 6), ('podzol', 2), ('coarse_dirt', 1)], sub=[('dirt', 4)], under=STONE, tip=[('tuff', 1), ('stone', 1)],
       hang={'body': 'hanging_roots', 'end': 'hanging_roots'},
       flora=[('leaf_litter[facing=north,segment_amount=4]', 4), ('leaf_litter[facing=east,segment_amount=2]', 2), ('short_grass', 3), ('fern', 1), ('pumpkin', 1)],
@@ -666,7 +669,7 @@ THEMES = [
       house=dict(wall='spruce_planks', frame='stripped_dark_oak_log', floor='oak_planks', roof_stair='dark_oak_stairs', roof_full='dark_oak_planks'),
       house_fn=barn, tree=fall_tree, rock=[('cobblestone', 2), ('mossy_cobblestone', 1), ('stone', 1)], mid=farm_mid, dia=farm_dia,
       depth_base=21, depth_dia=16, depth_mid=29, flora_density=0.25, post='oak_fence'),
-    T(id='nether', name='네더 요새', R=86,
+    T(id='nether', name='네더 요새', R=108, style='nether', wood='crimson', pots='nether',
       top=[('netherrack', 4), ('crimson_nylium', 3), ('warped_nylium', 1), ('soul_soil', 1)], sub=[('netherrack', 4)],
       under=[('netherrack', 5), ('blackstone', 2), ('basalt[axis=y]', 2), ('magma_block', 1)], tip=[('blackstone', 2), ('basalt[axis=y]', 1)],
       hang={'body': 'weeping_vines_plant', 'end': 'weeping_vines[age=0]'},
@@ -675,7 +678,7 @@ THEMES = [
       house=dict(wall='polished_blackstone_bricks', frame='chiseled_polished_blackstone', floor='nether_bricks', roof_stair='nether_brick_stairs', roof_full='nether_bricks', window='nether_brick_fence'),
       tree=fungus, rock=[('blackstone', 2), ('basalt[axis=y]', 1), ('gilded_blackstone', 1)], mid=nether_mid, dia=nether_dia,
       depth_base=22, depth_dia=16, depth_mid=30, flora_density=0.18, post='nether_brick_fence', lamp='soul_lantern', genpad='polished_blackstone'),
-    T(id='jungle', name='정글 신전', R=90,
+    T(id='jungle', name='정글 신전', R=112, style='jungle', wood='jungle', pots='jungle',
       top=[('grass_block', 6), ('moss_block', 2), ('podzol', 1)], sub=[('dirt', 4)], under=[('stone', 3), ('mossy_cobblestone', 2), ('andesite', 1), ('dirt', 1), ('tuff', 1)],
       tip=[('mossy_cobblestone', 1), ('stone', 1)], hang={'body': 'cave_vines_plant[berries=false]', 'end': 'cave_vines[age=0,berries=false]'},
       flora=[('fern', 3), ('large_fern|tall', 1), ('short_grass', 3), ('bush', 1)],
@@ -683,7 +686,7 @@ THEMES = [
       house=dict(wall='mossy_stone_bricks', frame='chiseled_stone_bricks', floor='stone_bricks', roof_stair='mossy_stone_brick_stairs', roof_full='mossy_stone_bricks'),
       tree=jungle_tree, rock=[('mossy_cobblestone', 2), ('stone', 1)], mid=jungle_mid, dia=jungle_dia,
       depth_base=22, depth_dia=16, depth_mid=31, flora_density=0.3, post='jungle_fence'),
-    T(id='castle', name='천공의 성', R=94,
+    T(id='castle', name='천공의 성', R=116, style='castle', wood='birch', pots='castle',
       top=[('grass_block', 7), ('moss_block', 1)], sub=[('dirt', 4)], under=[('calcite', 3), ('diorite', 2), ('stone', 2), ('white_terracotta', 1)],
       tip=[('calcite', 1), ('quartz_block', 1)],
       flora=[('oxeye_daisy', 2), ('cornflower', 2), ('allium', 1), ('lily_of_the_valley', 1), ('short_grass', 4)],
@@ -691,7 +694,7 @@ THEMES = [
       house=dict(wall='quartz_bricks', frame='quartz_pillar', floor='smooth_quartz', roof_stair='quartz_stairs', roof_full='quartz_block'),
       house_fn=tower_house, tree=birch_tree, rock=[('calcite', 2), ('diorite', 1)], mid=castle_mid, dia=castle_dia,
       depth_base=22, depth_dia=17, depth_mid=32, flora_density=0.25, post='birch_fence', genpad='smooth_quartz'),
-    T(id='end', name='엔드 성채', R=98,
+    T(id='end', name='엔드 성채', R=120, style='end', wood='warped', pots='end',
       top=[('end_stone', 6), ('end_stone_bricks', 1)], sub=[('end_stone', 3)], under=[('end_stone', 5), ('obsidian', 1), ('purpur_block', 1)],
       tip=[('obsidian', 2), ('crying_obsidian', 1)], flora_on=('end_stone',), flora=[('end_rod[facing=up]', 1)],
       plaza=[('end_stone_bricks', 3), ('purpur_block', 1)], path=[('end_stone_bricks', 1)],
@@ -699,3 +702,7 @@ THEMES = [
       house_fn=end_house, tree=chorus, rock=[('obsidian', 1), ('end_stone', 2)], mid=end_mid, dia=end_dia,
       depth_base=22, depth_dia=17, depth_mid=32, flora_density=0.03, post='end_rod', genpad='purpur_block', lamp='sea_lantern'),
 ]
+
+# middle islands with furnished insides
+import mids as _mids
+_mids.install(THEMES)
