@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+steve-eokka/out/
+steve-eokka/server
