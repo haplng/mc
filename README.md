@@ -5,3 +5,4 @@
 | 폴더 | 맵 | 버전 |
 | --- | --- | --- |
 | [steve-eokka](steve-eokka) | 스티브 억까 시뮬레이터 | 26.3 |
+| [bedwars-tycoon](bedwars-tycoon) | 배드워즈 타이쿤 (맵 10개 + 로비) | 26.3 |
