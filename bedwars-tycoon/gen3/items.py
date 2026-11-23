@@ -34,7 +34,7 @@ ITEMS = [
     dict(key='diamond_sword', name='다이아몬드 검', n=1, cost=4, cur='em', icon='diamond_sword', desc=['가장 센 검.'], give=('sword', 'diamond_sword'), unlock=300),
     dict(key='stick', name='막대기 (밀치기 I)', n=1, cost=5, cur='au', icon='stick', desc=['적을 다리 밖으로 밀어내.'],
          give=('give', it('stick', PLAIN, 'enchantments={"minecraft:knockback":1},' + name('막대기 (밀치기 I)'))), unlock=150),
-    dict(key='chain', name='사슬 갑옷', n=1, cost=40, cur='fe', icon='chainmail_boots', desc=['사슬 레깅스와 부츠.', '죽어도 사라지지 않아.'], give=('armor', 1, 'chainmail'), unlock=60),
+    dict(key='chain', name='사슬 갑옷', n=1, cost=24, cur='fe', icon='chainmail_boots', desc=['사슬 레깅스와 부츠.', '죽어도 사라지지 않아.'], give=('armor', 1, 'chainmail'), unlock=60),
     dict(key='iron_armor', name='철 갑옷', n=1, cost=12, cur='au', icon='iron_boots', desc=['철 레깅스와 부츠.', '죽어도 사라지지 않아.'], give=('armor', 2, 'iron'), unlock=200),
     dict(key='diamond_armor', name='다이아몬드 갑옷', n=1, cost=6, cur='em', icon='diamond_boots', desc=['다이아몬드 레깅스와 부츠.', '죽어도 사라지지 않아.'], give=('armor', 3, 'diamond'), unlock=450),
     dict(key='shears', name='가위', n=1, cost=20, cur='fe', icon='shears', desc=['양털을 순식간에 잘라.', '죽어도 사라지지 않아.'], give=('shears',), unlock=0),
@@ -56,10 +56,19 @@ ITEMS = [
          give=('give', it('carrot_on_a_stick', PLAIN, '!minecraft:max_damage,!minecraft:damage,item_model="minecraft:fire_charge",max_stack_size=64,custom_data={bw:"fireball"},' + name('화염구'))), unlock=150),
     dict(key='tnt', name='TNT', n=1, cost=4, cur='au', icon='tnt', desc=['놓자마자 불이 붙어.', '침대를 둘러싼 블록을 날려.'], give=('give', it('tnt', BLOCK)), unlock=180),
     dict(key='pearl', name='엔더 진주', n=1, cost=4, cur='em', icon='ender_pearl', desc=['적 기지로 가는 가장 빠른 길.'], give=('give', it('ender_pearl', PLAIN)), unlock=350),
-    dict(key='water', name='물 양동이', n=1, cost=3, cur='au', icon='water_bucket', desc=['쫓아오는 적을 늦춰.'], give=('give', it('water_bucket', BLOCK)), unlock=60),
+    dict(key='water', name='물 양동이', n=1, cost=2, cur='au', icon='water_bucket', desc=['쫓아오는 적을 늦춰.'], give=('give', it('water_bucket', BLOCK)), unlock=60),
     dict(key='egg', name='다리 알', n=1, cost=1, cur='em', icon='egg', desc=['던진 방향으로 다리가 생겨.'],
          give=('give', it('snowball', PLAIN, 'item_model="minecraft:egg",custom_data={bw:"egg"},' + name('다리 알'))), unlock=250),
-    dict(key='sponge', name='스펀지', n=4, cost=3, cur='au', icon='sponge', desc=['물을 빨아들여.'], give=('give', it('sponge', BLOCK)), unlock=30),
+    dict(key='sponge', name='스펀지', n=4, cost=2, cur='au', icon='sponge', desc=['물을 빨아들여.'], give=('give', it('sponge', BLOCK)), unlock=30),
+    # (new items go at the end so that the ids of the older ones stay what they were)
+    dict(key='bedbug', name='빈대', n=1, cost=24, cur='fe', icon='snowball', desc=['던진 곳에 좀벌레가 나와서', '15초 동안 적을 물어뜯어.'],
+         give=('give', it('snowball', PLAIN, 'custom_data={bw:"bedbug"},' + name('빈대'))), unlock=100),
+    dict(key='golem', name='드림 디펜더', n=1, cost=120, cur='fe', icon='iron_golem_spawn_egg', desc=['철 골렘이 4분 동안', '기지를 지켜 줘.'],
+         give=('give', it('iron_golem_spawn_egg', BLOCK, 'entity_data={id:"minecraft:iron_golem",Tags:["bw","bw.round","bw.mob","bw.golem","bw.mobnew"],PersistenceRequired:1b},' + name('드림 디펜더'))), unlock=220),
+    dict(key='milk', name='마법 우유', n=1, cost=4, cur='au', icon='milk_bucket', desc=['마시면 30초 동안', '적의 함정에 걸리지 않아.'],
+         give=('give', it('milk_bucket', PLAIN, name('마법 우유'))), unlock=120),
+    dict(key='tower', name='팝업 타워', n=1, cost=24, cur='fe', icon='chest', desc=['놓으면 그 자리에', '사다리 달린 탑이 솟아.'],
+         give=('give', it('chest', BLOCK, 'custom_data={bw:"tower"},' + name('팝업 타워'))), unlock=150),
 ]
 for n, d in enumerate(ITEMS): d['id'] = n + 1
 BY = {d['key']: d for d in ITEMS}
@@ -89,7 +98,7 @@ PAGES = [('빠른 구매', 'nether_star', ['wool', 'stone_sword', 'chain', 'pick
          ('도구', 'stone_pickaxe', ['shears', 'pick', 'axe']),
          ('원거리', 'bow', ['arrow', 'bow', 'bow_p', 'bow_pp']),
          ('물약', 'brewing_stand', ['speed', 'jump', 'invis']),
-         ('유틸리티', 'tnt', ['gapple', 'fireball', 'tnt', 'pearl', 'water', 'egg', 'sponge'])]
+         ('유틸리티', 'tnt', ['gapple', 'bedbug', 'golem', 'fireball', 'tnt', 'pearl', 'water', 'egg', 'milk', 'sponge', 'tower'])]
 
 # team upgrades (paid in diamonds): key, name, icon, description, cost of each level, coins to unlock
 UPGRADES = [
@@ -99,9 +108,19 @@ UPGRADES = [
     dict(key='forge', name='용광로', icon='furnace', desc=['기지의 자원이', '더 빨리 나와.'], costs=[2, 4, 6, 8], unlock=150,
          levels=['철 용광로 (+50%)', '황금 용광로 (+100%)', '에메랄드 용광로 (에메랄드 생성)', '용암 용광로 (+200%)']),
     dict(key='heal', name='치유의 샘', icon='beacon', desc=['기지 근처에 있으면', '체력이 계속 차.'], costs=[1], unlock=150),
-    dict(key='trap', name='함정이다!', icon='tripwire_hook', desc=['적이 침대에 다가오면', '8초 동안 느려지고 빗맞아.', '한 번 쓰면 사라져.'], costs=[1], unlock=120),
+    dict(key='cush', name='쿠션 부츠', icon='diamond_boots', desc=['팀의 부츠에', '가벼운 착지가 붙어.'], costs=[1, 2], unlock=100),
+    dict(key='dbuff', name='드래곤 버프', icon='dragon_egg', desc=['서든 데스 때 우리 팀 드래곤이', '1마리가 아니라 2마리가 돼.'], costs=[5], unlock=150),
 ]
 for n, d in enumerate(UPGRADES): d['id'] = 200 + n + 1
 UP = {d['key']: d for d in UPGRADES}
+# traps (diamonds): up to three wait in a queue, the first one costs 1, the second 2, the third 4; an enemy who comes near the bed sets off the first in line
+TRAP_COST = [1, 2, 4]
+TRAPS = [
+    dict(k=1, key='trap', name='함정이다!', icon='tripwire_hook', desc=['걸린 적은 8초 동안', '눈이 멀고 느려져.'], unlock=120),
+    dict(k=2, key='trap2', name='반격 함정', icon='feather', desc=['기지 근처의 우리 팀이 15초 동안', '신속 II와 점프 강화 II를 받아.'], unlock=120),
+    dict(k=3, key='trap3', name='경보 함정', icon='redstone_torch', desc=['경보가 울리고,', '투명한 적이 모습을 드러내.'], unlock=100),
+    dict(k=4, key='trap4', name='채굴 피로 함정', icon='iron_pickaxe', desc=['걸린 적은 10초 동안', '채굴 피로에 걸려.'], unlock=150),
+]
+for d in TRAPS: d['id'] = 210 + d['k']
 
 STARTERS = [d['key'] for d in ITEMS if d['unlock'] == 0]

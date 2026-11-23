@@ -114,6 +114,7 @@ class Bot:
                         x = px + x if flags & 1 else x; y = py + y if flags & 2 else y; z = pz + z if flags & 4 else z
                         yr = ry + yr if flags & 8 else yr; xr = rx + xr if flags & 16 else xr
                         self.pos = (x, y, z); self.rot = (yr, xr)
+                        self.tplog = getattr(self, 'tplog', []) + [(flags, round(vy, 3), round(y, 2))]
                         # 26.3: the confirmation carries the position and rotation the client ended up with
                         self._send('play', 'accept_teleportation', varint(tid) + struct.pack('>dddff', x, y, z, yr, xr))
                         # no separate position packet: 26.3 kicks a client that sends two positions in one tick

@@ -172,6 +172,129 @@ def flood(g, s, limit=6000):
                     break
     return seen
 
+MAXDROP = 6
+def steps(g, c):
+    """the cells a bot gets to from c in one step without building: level, one up (a jump), or down as far as six
+    (more than three hurts a little: a person who has lost the way jumps all the same)"""
+    x, y, z = c; out = []
+    for k, (ddx, ddz) in enumerate(CARD):
+        for ddy in (1, 0, -1, -2, -3, -4, -5, -6):
+            q = (x + ddx, y + ddy, z + ddz)
+            if g.stand(*q):
+                if ddy == 1 and not g.op[g.idx(x, y + 2, z)]: continue
+                if ddy < 0 and not all(g.op[g.idx(x + ddx, y + j, z + ddz)] for j in range(ddy, 2)): continue
+                out.append((q, k, ddy)); break
+    return out
+
+def flow(g, b, hubs):
+    """For every cell of the map a bot can stand on: the next step of the shortest walk (no building) to the nearest hub.
+    A bot that has lost its way looks its cell up here and walks home step by step - the thing a person does by looking around.
+    Returns {cell: code}; code = 1 + direction * 8 + (dy + 6), direction as in CARD; a hub's own cell has 40."""
+    cells = [(x, y + 1, z) for (x, y, z) in b if g.stand(x, y + 1, z)]
+    back = {}
+    for c in cells:
+        for q, k, ddy in steps(g, c):
+            back.setdefault(q, []).append((c, k, ddy))
+    dist = {h: 0.0 for h in hubs}; code = {h: 40 for h in hubs}; pq = [(0.0, h) for h in hubs]; heapq.heapify(pq)
+    while pq:
+        d, u = heapq.heappop(pq)
+        if d > dist[u]: continue
+        for c, k, ddy in back.get(u, ()):
+            nd = d + (WALK if ddy == 0 else UP if ddy == 1 else WALK + DROP + 4.0 * max(0, -ddy - 3))
+            if nd < dist.get(c, 1e18): dist[c] = nd; code[c] = 1 + k * 8 + (ddy + 6); heapq.heappush(pq, (nd, c))
+    return code, len(cells)
+
+def escapes(g, fl, cells, reach=22, maxup=34):
+    """Ground a bot can stand on but cannot walk home from - a ledge under an island, the top of a planet it fell on.
+    For each such patch: a way out that a bot can build (a pillar where the sky is open, then a bridge, one turn at most) to the nearest
+    ground that does lead home, and for every cell of the patch the next step to the foot of that pillar.
+    Returns ({cell: code}, {foot cell: (points to walk, the cell of known ground they end on)}); a foot has code 50."""
+    import collections
+    miss = set(c for c in cells if c not in fl)
+    if not miss: return {}, {}
+    back = {}; und = collections.defaultdict(set)
+    for c in miss:
+        for q, k, ddy in steps(g, c):
+            if q in miss: back.setdefault(q, []).append((c, k, ddy)); und[c].add(q); und[q].add(c)
+    buckets = {}
+    for f in fl: buckets.setdefault((f[0] >> 3, f[2] >> 3), []).append(f)
+    op, idx, dy = g.op, g.idx, g.dy
+    def clear(x, y, z):
+        i = idx(x, y, z); return op[i] and op[i + dy]
+    def leg(x0, z0, x1, z1, y):
+        x, z = x0, z0
+        while (x, z) != (x1, z1):
+            x += (x1 > x) - (x1 < x); z += (z1 > z) - (z1 < z)
+            if not clear(x, y, z): return False
+        return True
+    def way(c, f, p=None):
+        """c: where the bot stands; p: where its pillar goes up (c itself, or a cell it bridges out to first); f: known ground"""
+        p = p or c
+        h = max(f[1], p[1])
+        if h > p[1] and not all(op[idx(p[0], y, p[2])] for y in range(p[1] + 2, h + 2)): return None
+        for cx_, cz_ in ((f[0], p[2]), (p[0], f[2])):
+            if not (leg(p[0], p[2], cx_, cz_, h) and leg(cx_, cz_, f[0], f[2], h)): continue
+            pts = ([p] if p != c else []) + [(p[0], y, p[2]) for y in range(p[1] + 12, h, 12)] + ([(p[0], h, p[2])] if h > p[1] else [])
+            if (cx_, cz_) not in ((p[0], p[2]), (f[0], f[2])): pts.append((cx_, h, cz_))
+            pts.append(f)
+            return pts
+        return None
+    def way_out(c, f):
+        """... the pillar a few steps to the side, where there is nothing overhead"""
+        for k in range(1, 15):
+            for ddx, ddz in CARD:
+                p = (c[0] + ddx * k, c[1], c[2] + ddz * k)
+                if abs(p[0] - f[0]) > reach + 6 or abs(p[2] - f[2]) > reach + 6: continue
+                if not leg(c[0], c[2], p[0], p[2], c[1]): continue
+                pts = way(c, f, p)
+                if pts: return pts, 5 * k
+        return None, 0
+    codes = {}; exits = {}; seen = set(); stats = [0, 0, 0]
+    for start in sorted(miss):
+        if start in seen: continue
+        comp = [start]; seen.add(start); dq = [start]
+        while dq:
+            u = dq.pop()
+            for v in und[u]:
+                if v not in seen: seen.add(v); comp.append(v); dq.append(v)
+        stats[0] += 1; left = set(comp)
+        for _ in range(80):                                  # a patch may need many ways out (the steps down its sides go one way only)
+            if not left: break
+            # where to try: cells with nothing overhead first (a pillar can go straight up there), spread over the patch
+            top = g.y0 + g.sy - 4
+            sky = sorted((c for c in left if all(op[idx(c[0], y, c[2])] for y in range(c[1] + 2, top))), key=lambda c: (-c[1], c))
+            rest = sorted(left - set(sky), key=lambda c: (-c[1], c))
+            cand = sky[::max(1, len(sky) // 30)][:30] + rest[::max(1, len(rest) // 14)][:14]
+            best = None
+            for c in cand:
+                near = []
+                for bx in range((c[0] - reach) >> 3, ((c[0] + reach) >> 3) + 1):
+                    for bz in range((c[2] - reach) >> 3, ((c[2] + reach) >> 3) + 1): near += buckets.get((bx, bz), ())
+                near = [(8 * max(0, f[1] - c[1]) + 5 * (abs(f[0] - c[0]) + abs(f[2] - c[2])) + 2 * max(0, c[1] - f[1]), f) for f in near
+                        if abs(f[0] - c[0]) <= reach and abs(f[2] - c[2]) <= reach and -3 <= f[1] - c[1] <= maxup]
+                near.sort()
+                found = False
+                for est, f in near[:60]:
+                    if best and est >= best[0]: break
+                    pts = way(c, f)
+                    if pts: best = (est, c, f, pts); found = True; break
+                if not found:
+                    for est, f in near[:10]:
+                        if best and est >= best[0]: break
+                        pts, extra = way_out(c, f)
+                        if pts and (not best or est + extra < best[0]): best = (est + extra, c, f, pts); break
+            if not best: break
+            est, c, f, pts = best
+            exits[c] = (pts, f); codes[c] = 50; stats[1] += 1
+            dist = {c: 0}; dq = collections.deque([c])
+            while dq:
+                u = dq.popleft()
+                for p, k, ddy in back.get(u, ()):
+                    if p in left and p not in dist: dist[p] = dist[u] + 1; codes[p] = 1 + k * 8 + (ddy + 6); dq.append(p)
+            left -= set(dist)
+        stats[2] += len(comp) - len(left)
+    return codes, exits, (len(miss), *stats)
+
 def plan(mid, out_dir, verbose=True):
     d = pickle.load(open(f'{out_dir}/canvas/{mid}.pkl', 'rb')); b = d['b']
     key = hashlib.md5(pickle.dumps(sorted(b.items())) + open(__file__, 'rb').read()).hexdigest()
@@ -244,12 +367,25 @@ def plan(mid, out_dir, verbose=True):
     near = {i: sorted((j for j in range(N) if j != i), key=lambda j: cost.get(f'g{i}_a{j}', 1e9)) for i in range(N)}
     neard = {i: sorted(range(nd), key=lambda k: cost.get(f'g{i}_d{k}', 1e9)) for i in range(N)}
     neare = {i: sorted(range(ne), key=lambda k: cost.get(f'g{i}_e{k}', 1e9)) for i in range(N)}
-    out = dict(key=key, nodes=nodes, routes=routes, cost=cost, defs=defs, alt=alt, near=near, neard=neard, neare=neare, nd=nd, ne=ne, hint=hint, dia0=dia[0] if dia else None)
+    # the way home from anywhere: to the nearest bed-side, diamond or emerald point (from each of those there is a planned way on)
+    hubs = {tuple(c): n for n, c in nodes.items() if n[0] in 'ade'}
+    fl, nstand = flow(g, b, list(hubs))
+    cells_all = [(x, y + 1, z) for (x, y, z) in b if g.stand(x, y + 1, z)]
+    esc_codes, esc, esc_stats = escapes(g, fl, cells_all)
+    flow_out = [[c[0], c[1], c[2], v] for c, v in sorted({**fl, **esc_codes}.items())]
+    esc_out = [[list(c), [list(p) for p in pts], list(f)] for c, (pts, f) in sorted(esc.items())]
+    # and the way to the nearest forge: a bot on its own island that wants to go home walks straight there
+    forges = {tuple(c): n for n, c in nodes.items() if n[0] == 'g'}
+    fg, _ = flow(g, b, list(forges))
+    flowg_out = [[c[0], c[1], c[2], v] for c, v in sorted(fg.items())]
+    hubs.update(forges)
+    hub_out = {f'{c[0]} {c[1]} {c[2]}': n for c, n in hubs.items()}
+    out = dict(key=key, nodes=nodes, routes=routes, cost=cost, defs=defs, alt=alt, near=near, neard=neard, neare=neare, nd=nd, ne=ne, hint=hint, dia0=dia[0] if dia else None, flow=flow_out, flowg=flowg_out, hubs=hub_out, nstand=nstand, esc=esc_out)
     out = json.loads(json.dumps(out))
     json.dump(out, open(cf, 'w'))
     if verbose:
         ln = [len(r) for r in routes.values()]
-        print(f'nav {mid:8s} nodes {len(nodes)} routes {len(routes)} points {sum(ln)} longest {max(ln)}  {time.time() - t0:.0f}s', flush=True)
+        print(f'nav {mid:8s} nodes {len(nodes)} routes {len(routes)} points {sum(ln)} longest {max(ln)} | flow {len(fl)} + {len(fg)} (home) of {nstand} standable cells; off the ways: {esc_stats[0]} cells in {esc_stats[1]} patches, {esc_stats[2]} ways out reach {esc_stats[3]} cells  {time.time() - t0:.0f}s', flush=True)
     return out
 
 if __name__ == '__main__':

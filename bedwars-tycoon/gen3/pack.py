@@ -1,14 +1,15 @@
-"""Write the 'bedwars_maps' datapack (v8): the lobby, five maps, and the whole game that is played on them.
+"""Write the 'bedwars_maps' datapack (v9): the lobby, five maps, and the whole game that is played on them.
 The pack installs itself on first load; a world that still has an older version is upgraded in place."""
 import sys, os, math, json, shutil, zipfile, time, pickle
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import build, lobby, check, mapdata, nav, game, gui, ai, hacks, items
+import build, lobby, check, mapdata, nav, game, gui, ai, hacks, items, extras
 from util import Pack, snbt, t, tell
 
 ROOT = build.ROOT
 OUT = build.OUT
 PACK = OUT + '/bedwars_maps'
-VER = 8
+VER = 8                                       # version of what stands in the world (lobby and maps): a change here makes worlds install anew
+REL = 9                                       # version of the pack
 Y0 = 64
 LOBBY = (0, Y0, 0)
 MARGIN = 12                                   # how far beyond a map a round may build
@@ -55,7 +56,7 @@ def main(previews=True):
     t0 = time.time()
     if os.path.isdir(PACK): shutil.rmtree(PACK)
     os.makedirs(PACK + '/data/bw/structure')
-    json.dump({'pack': {'description': '배드워즈 타이쿤 (v8): 맵 5개 + 로비 + 게임', 'min_format': [121, 0], 'max_format': [121, 0]}},
+    json.dump({'pack': {'description': f'배드워즈 타이쿤 (v{REL}): 맵 5개 + 로비 + 게임', 'min_format': [121, 0], 'max_format': [121, 0]}},
               open(PACK + '/pack.mcmeta', 'w', encoding='utf-8'), ensure_ascii=False)
     recs, problems = build.build_maps(PACK + '/data/bw/structure', previews)
     lcv, pads, lspawn = lobby.build(recs)
@@ -162,14 +163,17 @@ def main(previews=True):
     # ------------------------------------------------------------------ the game
     maps = []; navs = {}; resets = {}
     blocks_json = json.load(open(ROOT + '/ref/263_blocks_data.json'))
+    # an untouched copy of every map stands far to the south: it tells what a player built from what is map (extras.py)
+    ZOFF, COPYGEN = extras.copy_offset(PACK + '/data/bw/structure', [rec['id'] for rec in recs])
     for rec in recs:
         mid = rec['id']; m = mapdata.load(mid, tuple(rec['center']), OUT); m['name'] = rec['name']
         nv = navs[mid] = nav.plan(mid, OUT)
         cx, cy, cz = rec['center']; px, py, pz = rec['place']; sx, sy, sz = rec['size']
         x0, z0, x1, z1 = px - MARGIN, pz - MARGIN, px + sx - 1 + MARGIN, pz + sz - 1 + MARGIN
         y0 = m['void_y'] - 2; y1 = m['top_y'] + 26
-        hv = halves(x0, z0, x1, z1)
+        hv = halves(x0, z0, x1, z1) + halves(x0, z0 + ZOFF, x1, z1 + ZOFF)
         sel = f'x={x0},y={y0 - 20},z={z0},dx={x1 - x0},dy={y1 - y0 + 60},dz={z1 - z0}'
+        csel = f'x={x0},y={y0 - 20},z={z0 + ZOFF},dx={x1 - x0},dy={y1 - y0 + 60},dz={z1 - z0}'
         hint = nv.get('hint'); d0 = nv.get('dia0')
         place = [f'place template bw:{mid} {px} {py} {pz}', *[npc_cmd(n, cx, cy, cz) for n in rec.get('npcs', [])],
                  f'execute as @e[type=minecraft:marker,tag=bw.gui,{sel}] at @s run function bw:gui/init']
@@ -178,7 +182,8 @@ def main(previews=True):
             place.append(npc_cmd(dict(kind='hint', team=None, pos=[hint[0] + 0.5, hint[1], hint[2] + 0.5], yaw=yaw), cx, cy, cz, ['bw.round']))
         resets[mid] = dict(
             forceload=[f'forceload add {a} {b} {c} {d}' for a, b, c, d in hv], unload=[f'forceload remove {a} {b} {c} {d}' for a, b, c, d in hv],
-            corners=[(x, cy, z) for x, z in ((x0, z0), (x1, z0), (x0, z1), (x1, z1), ((x0 + x1) // 2, (z0 + z1) // 2))],
+            corners=[(x, cy, z + dz_) for dz_ in (0, ZOFF) for x, z in ((x0, z0), (x1, z0), (x0, z1), (x1, z1), ((x0 + x1) // 2, (z0 + z1) // 2))],
+            copy=[f'place template bw:{mid} {px} {py} {pz + ZOFF}', f'kill @e[type=!minecraft:player,{csel}]'], copygen=COPYGEN,
             kill=[f'kill @e[type=!minecraft:player,tag=bw,{sel}]', f'kill @e[type=minecraft:item,{sel}]', f'kill @e[type=minecraft:arrow,{sel}]'],
             wipe=[f'fill {a} {b} {c} {d} {e} {f} minecraft:air replace #bw:reset' for a, b, c, d, e, f in slices((x0, y0, z0, x1, y1, z1))],
             place=place, border=sx + 2 * MARGIN, ymax=y1 - 2)
@@ -188,6 +193,8 @@ def main(previews=True):
     G = gui.write(P, [dict(id=r_['id'], name=r_['name'], size=f"{r_['size'][0]}x{r_['size'][2]}", price=game.MAP_PRICE[r_['id']], bonus=game.MAP_BONUS[r_['id']], icon=icons[r_['id']]) for r_ in recs])
     a = ai.write(P, maps, navs)
     ai.block_tags(P, blocks_json, lambda name: nav.is_open('minecraft:' + name))
+    extras.block_tags(P, blocks_json, lambda name: nav.is_open('minecraft:' + name), ai.SOFT)
+    ex = extras.write(P, maps, resets, ZOFF)
     h = hacks.write(P, G, maps, navs)
     hacks.npcs(P, maps)
     gui.npc_hints(P, PACK)
@@ -219,7 +226,7 @@ def main(previews=True):
                         'execute if loaded 0 0 0 unless entity @e[type=minecraft:marker,tag=bw.vec] run summon minecraft:marker 0.0 0.0 0.0 {Tags:["bw.vec"]}',
                         'execute if loaded 0 0 0 unless entity @e[type=minecraft:armor_stand,tag=bw.tmp] run summon minecraft:armor_stand 0.5 -60 0.5 {Marker:1b,Invisible:1b,NoGravity:1b,Invulnerable:1b,Tags:["bw.tmp"]}'])
     fn('tick', tick + g['tick'] + a['tick'] + h['tick'] + gg['tick'])
-    fn('load', ['scoreboard objectives add lobby trigger', 'scoreboard objectives add bw dummy', *g['load'], *gg['load'], *a['load'], *h['load'],
+    fn('load', ['scoreboard objectives add lobby trigger', 'scoreboard objectives add bw dummy', *g['load'], *gg['load'], *a['load'], *h['load'], *ex['load'],
                 'forceload add -1 -1 0 0',
                 # a world with an older version: swap it for this one
                 f'execute if score #installed bw matches 0.. unless score #ver bw matches {VER}.. run function bw:upgrade/prepare',

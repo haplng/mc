@@ -19,7 +19,7 @@ HACKS = [
     dict(key='scaffold', name='Scaffold', tier=2, icon='scaffolding', levels=[('Tower(vanilla)', 1000), ('Tower(vanilla), Keep Y', 1500)],
          desc=['가방의 블록이 발밑에 알아서 놓여.', '제자리에서 점프를 누르면 탑이 올라가.', 'Keep Y: 뛰면서 가도 같은 높이로 깔려.']),
     dict(key='lag', name='Lag range', tier=2, icon='repeater', levels=[('100ms', 700), ('200ms', 1200)], desc=['Reach에 더해 사거리가 늘어나.', '100ms: +0.56칸  /  200ms: +1.12칸']),
-    dict(key='stasis', name='Stasis', tier=2, icon='ender_pearl', levels=[('', 800)], desc=['공허로 떨어지면 3초 동안', '공중에 붕 떠 있어. (30초에 한 번)']),
+    dict(key='stasis', name='Stasis', tier=2, icon='ender_pearl', levels=[('', 800)], desc=['공허로 떨어지면 3초 동안 그 자리에 멈춰.', '그 사이에 블록을 놓아서 살아. (8초에 한 번)']),
     dict(key='tower', name='Tower', tier=3, icon='firework_rocket', levels=[('fly x1.5 motion', 1500), ('fly x3 motion', 2500)], desc=['제자리에서 점프를 누르고 있으면', '블록을 깔면서 날듯이 올라가.', 'x1.5 / x3: 그냥 쌓는 것보다 그만큼 빨라.']),
     dict(key='nofall', name='NoFall', tier=3, icon='hay_block', levels=[('', 1200)], desc=['낙하 피해를 안 받아.']),
     dict(key='fbjump', name='FB Longjump', tier=3, icon='blaze_powder', levels=[('', 2000)], desc=['화염구를 발밑을 보고 쓰면', '피해 없이 아주 멀리 날아가.']),
@@ -140,6 +140,9 @@ def write(P, G, maps, navs):
           f'execute if entity @s[{ON("scaffold")}] if items entity @s container.* #bw:scaf run function bw:hack/scaffold',
           f'execute if entity @s[{ON("tower")}] run function bw:hack/tower',
           'execute if entity @s[tag=bw.lev] unless predicate bw:jump run function bw:hack/towerend']
+    # Stasis lasts three seconds (220 -> 160), or until there is something to stand on
+    ht += ['execute if score @s bw.stc matches 161..215 unless block ~ ~-0.4 ~ #bw:open run function bw:hack/stasisend',
+           'execute if score @s bw.stc matches 160 run function bw:hack/stasisend']
     P.fn('hack/tick', ht)
     # ---- Aim Assist (normal): the crosshair drifts towards an enemy that is nearly in it
     aim = ['tag @e[tag=bw.aimt] remove bw.aimt']
@@ -239,12 +242,19 @@ def write(P, G, maps, navs):
                         'execute if entity @s[scores={bw.h_tower=2}] run effect give @s minecraft:levitation 1 5 true', 'tag @s add bw.lev',
                         'execute positioned ~ ~-1.01 ~ if block ~ ~ ~ #bw:open align xyz run function bw:hack/putblock'])
     P.fn('hack/towerend', ['tag @s remove bw.lev', 'effect clear @s minecraft:levitation'])
-    # ---- Stasis: falling into the void, the player hangs in the air for three seconds (per map: it needs the height of the void)
-    for m in maps:
-        P.add(f'm/{m["id"]}/tick', [f'execute as @a[tag=bw.fighter,scores={{bw.h_stasis=1..,bw.stc=0}},tag=!bw.off_stasis] at @s if entity @s[y={m["void_y"] + 1},dy=7] unless predicate bw:ground run function bw:hack/stasis'])
-    P.fn('hack/stasis', ['scoreboard players set @s bw.stc 600', 'effect give @s minecraft:levitation 3 0 true', 'effect give @s minecraft:slow_falling 6 0 true',
-                         'title @s actionbar ' + snbt(t('Stasis!', 'light_purple', bold=True)), 'playsound minecraft:block.beacon.activate player @s ~ ~ ~ 1 1.6',
+    # ---- Stasis: what the real thing does is hold the player still in mid-air for about three seconds, able to look around and place blocks
+    # (a "block clutch"). Here: falling with nothing at all underneath, the player stops falling for three seconds.
+    P.json('bw/predicate/falling.json', {'type': 'minecraft:entity_properties', 'entity': 'this', 'predicate': {'minecraft:movement': {'fall_distance': {'min': 2.5}}}})
+    P.add('game/tick', ['execute as @a[tag=bw.fighter,scores={bw.h_stasis=1..,bw.stc=0},tag=!bw.off_stasis] at @s unless predicate bw:ground if predicate bw:falling ' +
+                        ' '.join(f'if block ~ ~-{d} ~ #bw:open' for d in range(1, 13)) + ' run function bw:hack/stasis'])
+    # No weight for three seconds, and the fall is stopped once: a teleport to the height the player is at (an absolute height takes the
+    # vertical speed away; the rest of the command is relative, so walking and looking go on undisturbed).
+    P.fn('hack/stasis', ['scoreboard players set @s bw.stc 220', 'attribute @s minecraft:gravity base set 0',
+                         'execute store result storage bw:tmp st.y double 0.001 run data get entity @s Pos[1] 1000', 'function bw:hack/stasis2 with storage bw:tmp st',
+                         'title @s actionbar ' + snbt(t('Stasis! 3초 동안 멈췄어 - 블록을 놓아.', 'light_purple', bold=True)), 'playsound minecraft:block.beacon.activate player @s ~ ~ ~ 1 1.6',
                          'particle minecraft:end_rod ~ ~0.5 ~ 0.4 0.6 0.4 0.02 25'])
+    P.fn('hack/stasis2', ['$tp @s ~ $(y) ~'])
+    P.fn('hack/stasisend', ['attribute @s minecraft:gravity base reset', 'scoreboard players set @s[scores={bw.stc=161..}] bw.stc 160'])
     # ---- FB Longjump: a fireball used looking at one's feet throws the player far, and does not hurt
     base = lambda effects: {'description': {'text': ''}, 'supported_items': '#minecraft:enchantable/durability', 'weight': 1, 'max_level': 1,
                             'min_cost': {'base': 1, 'per_level_above_first': 0}, 'max_cost': {'base': 1, 'per_level_above_first': 0}, 'anvil_cost': 1, 'slots': ['head'], 'effects': effects}

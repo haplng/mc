@@ -187,18 +187,22 @@ def write(P, maps=()):
                 P.fn(f'gui/tool/{d["give"][1]}{k}', pay(tr[5], tr[4]) + [f'scoreboard players set @s {obj} {k + 1}', 'function bw:game/tools', f'function bw:gui/ok {{name:{q(tr[0])}}}'])
 
     # =================================================================== team upgrades (diamonds)
-    UPS = items.UPGRADES
-    SLOT = {'sharp': 10, 'prot': 11, 'haste': 12, 'forge': 19, 'heal': 20, 'trap': 14}
-    val = {'sharp': 'sharp', 'prot': 'prot', 'haste': 'haste', 'forge': 'fl', 'heal': 'heal', 'trap': 'trap'}
-    P.fn('gui/teamvals', [f'$scoreboard players operation @s bw.v{k} = #{v}$(i) bw' for k, v in val.items()])
+    UPS = items.UPGRADES; TRAPS = items.TRAPS
+    # the same places as on Hypixel: upgrades on the left, traps on the right, the trap queue at the bottom
+    SLOT = {'sharp': 10, 'prot': 11, 'haste': 12, 'forge': 19, 'heal': 20, 'cush': 21, 'dbuff': 22}
+    TSLOT = {1: 14, 2: 15, 3: 16, 4: 23}
+    val = {'sharp': 'sharp', 'prot': 'prot', 'haste': 'haste', 'forge': 'fl', 'heal': 'heal', 'cush': 'cush', 'dbuff': 'dbuff'}
+    P.fn('gui/teamvals', [f'$scoreboard players operation @s bw.v{k} = #{v}$(i) bw' for k, v in val.items()] +
+         ['$scoreboard players operation @s bw.vtqn = #tqn$(i) bw', *[f'$scoreboard players operation @s bw.vtq{c} = #tq$(i){c} bw' for c in 'abc']])
     G.prepare('team', ['execute store result storage bw:tmp me.i int 1 run scoreboard players get @s bw.team', 'function bw:gui/teamvals with storage bw:tmp me'])
-    G.load += [f'scoreboard objectives add bw.v{k} dummy' for k in val]
+    G.load += [f'scoreboard objectives add bw.v{k} dummy' for k in list(val) + ['tqn', 'tqa', 'tqb', 'tqc']]
     slots = {}
     for j in range(9): slots[27 + j] = [('', PANE('gray'))]
     slots[4] = [('', icon('diamond', 150, '팀 업그레이드', 'aqua', [ln('다이아몬드로 사는'), ln('팀 전체의 강화야.')]))]
+    LOCKED = lambda d: [ln({'text': '✘ 잠김', 'color': 'red'}), ln(''), ln('로비의 업그레이드 가게에서'), ln({'text': f'{d["unlock"]} 코인', 'color': 'gold'}, '으로 해금할 수 있어.')]
     for d in UPS:
         key = d['key']; U = f'if entity @s[tag=bw.u.up_{key}]'; NU = f'unless entity @s[tag=bw.u.up_{key}]'; n = len(d['costs'])
-        vs = [(NU, icon('gray_dye', d['id'], d['name'], 'red', [ln({'text': '✘ 잠김', 'color': 'red'}), ln(''), ln('로비의 업그레이드 가게에서'), ln({'text': f'{d["unlock"]} 코인', 'color': 'gold'}, '으로 해금할 수 있어.')]))]
+        vs = [(NU, icon('gray_dye', d['id'], d['name'], 'red', LOCKED(d)))]
         def tier_lines(lv):
             if n == 1: return []
             out = []
@@ -211,19 +215,39 @@ def write(P, maps=()):
             title = d['name'] + (f' {items_roman(lv)}' if n > 1 and lv < n else '')
             body = [*[ln(x) for x in d['desc']], ln(''), *tier_lines(lv)]
             if lv == n:
-                vs.append((have, icon(d['icon'], d['id'], d['name'], 'green', body + [ln({'text': '이미 다 샀어!' if key != 'trap' else '함정이 준비됐어.', 'color': 'green'})], glint=True)))
+                vs.append((have, icon(d['icon'], d['id'], d['name'], 'green', body + [ln({'text': '이미 다 샀어!', 'color': 'green'})], glint=True)))
                 continue
             c = d['costs'][lv]
             vs += [(f'{have} if score @s bw.di matches {c}..', icon(d['icon'], d['id'], title, 'green', [cost_line(c, 'di'), ln('')] + body + [BUY])),
                    (f'{have} unless score @s bw.di matches {c}..', icon(d['icon'], d['id'], title, 'red', [cost_line(c, 'di'), ln('')] + body + [short('di')]))]
         slots[SLOT[key]] = vs
+    # ---- traps: the price depends on how many are waiting
+    for d in TRAPS:
+        U = f'if entity @s[tag=bw.u.up_{d["key"]}]'; NU = f'unless entity @s[tag=bw.u.up_{d["key"]}]'
+        body = [*[ln(x) for x in d['desc']], ln('')]
+        vs = [(NU, icon('gray_dye', d['id'], d['name'], 'red', LOCKED(d)))]
+        for q_, c in enumerate(items.TRAP_COST):
+            have = f'{U} if score @s bw.vtqn matches {q_}'; wait = ln(f'대기 중인 함정: {q_}/3')
+            vs += [(f'{have} if score @s bw.di matches {c}..', icon(d['icon'], d['id'], d['name'], 'green', [cost_line(c, 'di'), ln('')] + body + [wait, BUY])),
+                   (f'{have} unless score @s bw.di matches {c}..', icon(d['icon'], d['id'], d['name'], 'red', [cost_line(c, 'di'), ln('')] + body + [wait, short('di')]))]
+        vs.append((f'{U} if score @s bw.vtqn matches 3..', icon(d['icon'], d['id'], d['name'], 'red', body + [ln({'text': '함정 대기열이 가득 찼어!', 'color': 'red'})])))
+        slots[TSLOT[d['k']]] = vs
+    # ---- the queue: three places, the first one goes off first
+    for j, c in enumerate('abc'):
+        nxt = [ln('적이 침대 근처에 오면'), ln('첫 번째 함정부터 발동해.')]
+        vs = [(f'if score @s bw.vtq{c} matches 0', icon('light_gray_stained_glass', 150, f'함정 #{j + 1}: 없음', 'red', nxt + [ln(''), ln('다음 함정 가격: ', {'text': f'{items.TRAP_COST[j]} 다이아몬드', 'color': 'aqua'})]))]
+        for d in TRAPS:
+            vs.append((f'if score @s bw.vtq{c} matches {d["k"]}', icon(d['icon'], 150, f'함정 #{j + 1}: {d["name"]}', 'green', [*[ln(x) for x in d['desc']], ln(''), *nxt], glint=True)))
+        slots[39 + j] = vs
     G.page('team', 1, slots)
+    HEAD = lambda key: [f'execute unless entity @s[tag=bw.u.up_{key}] run return run function bw:gui/no {{msg:"아직 잠겨 있어. 로비의 업그레이드 가게에서 해금해."}}',
+                        'execute unless entity @s[tag=bw.fighter] run return run function bw:gui/no {msg:"게임 중에만 살 수 있어."}',
+                        'execute store result storage bw:tmp me.i int 1 run scoreboard players get @s bw.team']
+    BOUGHT = lambda label: ['$tellraw @a[tag=bw.play,scores={bw.team=$(i)}] [{selector:"@s"},{text:"이(가) ",color:"green"},{text:' + q(label) + ',color:"gold"},{text:"을(를) 구매했어!",color:"green"}]',
+                            'playsound minecraft:block.note_block.pling master @s ~ ~ ~ 0.8 2']
     for d in UPS:
         key = d['key']; v = val[key]; n = len(d['costs'])
-        G.act(d['id'], [f'execute unless entity @s[tag=bw.u.up_{key}] run return run function bw:gui/no {{msg:"아직 잠겨 있어. 로비의 업그레이드 가게에서 해금해."}}',
-                        'execute unless entity @s[tag=bw.fighter] run return run function bw:gui/no {msg:"게임 중에만 살 수 있어."}',
-                        'execute store result storage bw:tmp me.i int 1 run scoreboard players get @s bw.team',
-                        f'function bw:gui/up/{key} with storage bw:tmp me'])
+        G.act(d['id'], HEAD(key) + [f'function bw:gui/up/{key} with storage bw:tmp me'])
         body = [f'$execute if score #{v}$(i) bw matches {n}.. run return run function bw:gui/no {{msg:"이미 다 샀어."}}']
         for lv, c in enumerate(d['costs']):
             body += [f'$execute if score #{v}$(i) bw matches {lv} unless score @s bw.di matches {c}.. run return run function bw:gui/short/di {{need:{c}}}',
@@ -231,11 +255,19 @@ def write(P, maps=()):
             label = d['levels'][lv].split(' (')[0] if d.get('levels') else d['name'] + (f' {items_roman(lv)}' if n > 1 else '')
             eff = {'sharp': ['$execute as @a[tag=bw.fighter,scores={bw.team=$(i)}] run function bw:game/enchant'],
                    'prot': ['$execute as @a[tag=bw.fighter,scores={bw.team=$(i)}] run function bw:game/enchant'],
-                   'forge': [f'$scoreboard players set #fs$(i) bw {[150, 200, 200, 300][lv]}'], 'haste': [], 'heal': [], 'trap': []}[key]
-            P.fn(f'gui/up/{key}{lv}', [f'clear @s minecraft:diamond {c}', f'$scoreboard players set #{v}$(i) bw {lv + 1}', *eff,
-                                       '$tellraw @a[tag=bw.play,scores={bw.team=$(i)}] [{selector:"@s"},{text:"이(가) ",color:"green"},{text:' + q(label) + ',color:"gold"},{text:"을(를) 구매했어!",color:"green"}]',
-                                       'playsound minecraft:block.note_block.pling master @s ~ ~ ~ 0.8 2'])
+                   'cush': ['$execute as @a[tag=bw.fighter,scores={bw.team=$(i)}] run function bw:game/enchant'],
+                   'forge': [f'$scoreboard players set #fs$(i) bw {[150, 200, 200, 300][lv]}']}.get(key, [])
+            P.fn(f'gui/up/{key}{lv}', [f'clear @s minecraft:diamond {c}', f'$scoreboard players set #{v}$(i) bw {lv + 1}', *eff, *BOUGHT(label)])
         P.fn(f'gui/up/{key}', body)
+    for d in TRAPS:
+        G.act(d['id'], HEAD(d['key']) + [f'data modify storage bw:tmp me.k set value {d["k"]}', f'function bw:gui/up/trap{d["k"]} with storage bw:tmp me'])
+        body = ['$execute if score #tqn$(i) bw matches 3.. run return run function bw:gui/no {msg:"함정 대기열이 가득 찼어."}']
+        for q_, c in enumerate(items.TRAP_COST):
+            body.append(f'$execute if score #tqn$(i) bw matches {q_} unless score @s bw.di matches {c}.. run return run function bw:gui/short/di {{need:{c}}}')
+        for q_, c in enumerate(items.TRAP_COST):
+            body.append(f'$execute if score #tqn$(i) bw matches {q_} run clear @s minecraft:diamond {c}')
+        body += ['$function bw:trap/add {i:$(i),k:$(k)}', *BOUGHT(d['name'])]
+        P.fn(f'gui/up/trap{d["k"]}', body)
 
     # =================================================================== unlocking (coins, in the lobby)
     un = names + [('팀 업그레이드', 'diamond')]
@@ -262,12 +294,12 @@ def write(P, maps=()):
                 d = items.BY[key]
                 slots[GRID[k]] = unlock_variants(1000 + d['id'], d['icon'], d['name'], f'bw.u.{key}', d['unlock'], d['desc'], d.get('icon_extra', ''), d['n'])
         else:
-            for k, d in enumerate(UPS):
+            for k, d in enumerate(UPS + TRAPS):
                 slots[GRID[k]] = unlock_variants(1000 + d['id'], d['icon'], d['name'], f'bw.u.up_{d["key"]}', d['unlock'], d['desc'] + ['(게임 중 다이아몬드로 구매)'])
         G.page('unlock', p, slots)
         G.act(300 + p, [f'function bw:gui/tab {{kind:"unlock",p:{p}}}'])
     for d in items.ITEMS: unlock_act(1000 + d['id'], f'bw.u.{d["key"]}', d['unlock'], d['name'])
-    for d in UPS: unlock_act(1000 + d['id'], f'bw.u.up_{d["key"]}', d['unlock'], d['name'])
+    for d in UPS + TRAPS: unlock_act(1000 + d['id'], f'bw.u.up_{d["key"]}', d['unlock'], d['name'])
     for k, m in enumerate(maps): unlock_act(1300 + k, f'bw.m.{m["id"]}', m['price'], '맵 ' + m['name'])
     # the coin counter in a lore line is resolved when the chest is painted, for whoever is looking
     return G

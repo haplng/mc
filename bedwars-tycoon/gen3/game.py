@@ -5,14 +5,17 @@ from util import TEAMS, TEAM_KO, TEAM_COLOR, Raw, snbt, t, line, tell, q
 import items
 
 N = 8
-# ---- Hypixel's clock (solo / doubles). The wiki confirms: diamond tier I every 30 s (4 lie there at most), emerald tier I every 65 s (2 at most).
+# ---- Hypixel's clock (solo / doubles).
+# Hypixel wiki: diamond tier I every 30 s (4 lie there at most), emerald tier I every 65 s (2 at most). Forum guides and the Korean wiki: diamond II 23 s,
+# III 11.2 s (shown as 12); emerald II 50 s, III 35 s; an upgrade every 6 minutes, beds gone at 30:00, sudden death (dragons) at 40:00, a draw at 50:00.
+# Every diamond generator starts with one diamond. The forge's own speed is not published: one iron a second and one gold in six is what it looks like.
 FORGE_IRON = 20            # ticks per iron ingot at a forge without upgrades
 FORGE_GOLD = 120           # ticks per gold ingot
 FORGE_EMERALD = 1200       # ticks per emerald once the forge is an Emerald Forge
 FORGE_SPEED = [100, 150, 200, 200, 300]      # % by forge level: none, Iron, Golden, Emerald (also makes emeralds), Molten
 CAP = dict(fe=48, au=8, di=4, em=2)
-DIAMOND = [600, 460, 240]  # ticks per diamond at tier I, II, III
-EMERALD = [1300, 1000, 600]
+DIAMOND = [600, 460, 224]  # ticks per diamond at tier I, II, III
+EMERALD = [1300, 1000, 700]
 EVENTS = [(360, 'd2', '다이아몬드 II'), (720, 'e2', '에메랄드 II'), (1080, 'd3', '다이아몬드 III'), (1440, 'e3', '에메랄드 III'),
           (1800, 'beds', '침대 파괴'), (2400, 'sudden', '서든 데스'), (3000, 'over', '게임 종료')]
 RESPAWN = 100              # ticks
@@ -76,13 +79,15 @@ def write(P, maps, lobby, resets, n_installed):
         G = 14; groups = [r['wipe'][k:k + G] for k in range(0, len(r['wipe']), G)]
         for k, grp in enumerate(groups):
             P.fn(f'reset/{mid}/w{k}', grp + [f'schedule function bw:reset/{mid}/w{k + 1} 1t' if k + 1 < len(groups) else f'schedule function bw:reset/{mid}/place 1t'])
-        P.fn(f'reset/{mid}/place', [*r['kill'], *r['place'], 'schedule function bw:game/begin 10t'])
+        P.fn(f'reset/{mid}/place', [*r['kill'], *r['place'], f'execute unless score #cp_{mid} bw matches {r["copygen"]} run function bw:reset/{mid}/copy',
+                                    'schedule function bw:game/begin 10t'])
     P.fn('game/begin', [
         'scoreboard players set #state bw 3',
         *[f'scoreboard players set #{v} bw 0' for v in ('time', 'sec', 't20', 't4', 'dg', 'eg', 'sudden', 'allbeds', 'lvl')],
         'scoreboard players set #dt bw 1', 'scoreboard players set #et bw 1',
         *per_team('scoreboard players set #bed{i} bw 1'),
-        *[f'scoreboard players set #{v}{i} bw 0' for v in ('out', 'hum', 'fl', 'fe', 'au', 'fm', 'pfe', 'pau', 'pem', 'bres', 'sharp', 'prot', 'haste', 'heal', 'trap', 'trapt') for i in range(N)],
+        *[f'scoreboard players set #{v}{i} bw 0' for v in ('out', 'hum', 'fl', 'fe', 'au', 'fm', 'pfe', 'pau', 'pem', 'bres', 'sharp', 'prot', 'haste', 'heal', 'cush', 'dbuff', 'tqn', 'tcd') for i in range(N)],
+        *[f'scoreboard players set #tq{i}{c} bw 0' for i in range(N) for c in 'abc'],
         *per_team('scoreboard players set #fs{i} bw 100'),
         # the opponents are as good as the best player's stage; coins grow with it too
         'execute as @a[tag=bw.play] run scoreboard players operation #lvl bw > @s bw.stage',
@@ -105,7 +110,8 @@ def write(P, maps, lobby, resets, n_installed):
     # one player joins a team: colours, score, gear back to nothing
     P.fn('game/join', ['$team join bw.$(dye) @s', '$scoreboard players set @s bw.team $(i)', '$scoreboard players set #hum$(i) bw 1',
                        *[f'scoreboard players set @s {o} 0' for o in ('bw.armor', 'bw.pick', 'bw.axe', 'bw.shears', 'bw.resp', 'bw.death', 'bw.gk', 'bw.gf', 'bw.gb', 'bw.lht')],
-                       'gamemode adventure @s', 'clear @s', 'effect clear @s', 'attribute @s minecraft:attack_speed base set 1024',
+                       'gamemode survival @s', 'clear @s', 'effect clear @s', 'attribute @s minecraft:attack_speed base set 1024',
+                       'scoreboard players set @s bw.deny -1', 'scoreboard players set @s bw.milk 0',
                        'experience set @s 0 levels', 'experience set @s 0 points',
                        *[f'item replace entity @s enderchest.{k} with minecraft:air' for k in range(27)], 'function bw:game/kit'])
     # ------------------------------------------------------------------ what a player wears and carries by right
@@ -131,6 +137,12 @@ def write(P, maps, lobby, resets, n_installed):
         ench.append(f'execute if score @s bw.team matches {i} if score #sharp{i} bw matches 1.. run function bw:game/sharp')
         for lv in (1, 2, 3, 4):
             ench.append(f'execute if score @s bw.team matches {i} if score #prot{i} bw matches {lv} run function bw:game/prot{lv}')
+    for i in range(N):
+        for lv in (1, 2):
+            ench.append(f'execute if score @s bw.team matches {i} if score #cush{i} bw matches {lv} run item modify entity @s armor.feet bw:cush{lv}')
+    ench.append('execute if score #sudden bw matches 1 run item modify entity @s armor.head bw:dragonkin')
+    for lv in (1, 2):
+        P.json(f'bw/item_modifier/cush{lv}.json', {'type': 'minecraft:set_enchantments', 'enchantments': {'minecraft:feather_falling': lv}, 'add': False})
     P.fn('game/enchant', ench)
     slots = [f'container.{k}' for k in range(36)]
     P.fn('game/sharp', [f'execute if items entity @s {s} #bw:sharp run item modify entity @s {s} bw:sharp' for s in slots])
@@ -161,7 +173,6 @@ def write(P, maps, lobby, resets, n_installed):
         # health comes back the old way: about half a heart every four seconds
         'scoreboard players operation #q4 bw = #sec bw', 'scoreboard players operation #q4 bw %= #4 bw',
         'execute if score #q4 bw matches 0 run effect give @e[tag=bw.fighter] minecraft:regeneration 3 0 true',
-        'execute if score #sudden bw matches 1 if score #q4 bw matches 0..1 as @e[tag=bw.fighter] run damage @s 1 minecraft:magic',
         'clear @a[tag=bw.play] minecraft:bucket', 'clear @a[tag=bw.play] minecraft:glass_bottle',
         *per_team('execute if score #haste{i} bw matches 1.. run effect give @a[tag=bw.fighter,scores={{bw.team={i}}}] minecraft:haste 3 0 true'),
         *per_team('execute if score #haste{i} bw matches 2 run effect give @a[tag=bw.fighter,scores={{bw.team={i}}}] minecraft:haste 3 1 true'),
@@ -175,7 +186,7 @@ def write(P, maps, lobby, resets, n_installed):
     P.fn('game/ev/e3', ['scoreboard players set #et bw 3', up('에메랄드', 'dark_green', 'III')])
     P.fn('game/ev/beds', [announce(t('남은 침대가 전부 파괴됐어!', 'red', bold=True)), 'scoreboard players set #allbeds bw 1',
                           'execute as @a at @s run playsound minecraft:entity.ender_dragon.growl master @s ~ ~ ~ 1 1', *by_map(maps, 'allbeds')])
-    P.fn('game/ev/sudden', ['scoreboard players set #sudden bw 1', announce(t('서든 데스! 이제 모두가 서서히 피해를 입어.', 'red', bold=True))])
+    P.fn('game/ev/sudden', ['scoreboard players set #sudden bw 1', announce(t('서든 데스! 팀마다 드래곤이 나타났어.', 'red', bold=True)), 'function bw:dragon/begin'])
     P.fn('game/ev/over', [announce(t('시간 종료!', 'yellow')), 'function bw:game/end_lose'])
 
     # ---- sidebar: lines are fake players with their own display names
@@ -217,6 +228,8 @@ def write(P, maps, lobby, resets, n_installed):
         'scoreboard players set #final bw 1',
         *per_team('execute if score @s bw.team matches {i} if score #bed{i} bw matches 1 run scoreboard players set #final bw 0'),
         'function bw:game/kill',
+        # what they carried goes to the one who got them
+        'execute if score #kt bw matches 1.. run function bw:ai/ploot',
         'clear @s', 'execute if score @s bw.pick matches 2.. run scoreboard players remove @s bw.pick 1',
         'execute if score @s bw.axe matches 2.. run scoreboard players remove @s bw.axe 1',
         'gamemode spectator @s', 'tag @s remove bw.fighter',
@@ -255,7 +268,7 @@ def write(P, maps, lobby, resets, n_installed):
         'execute if score @s bw.resp matches 0 run function bw:game/prespawn'])
     P.fn('game/prespawn', [
         *by_map(maps, 'spawn'),
-        'gamemode adventure @s', 'function bw:game/kit', 'title @s times 0 20 5', 'title @s subtitle ""', 'title @s title ' + snbt(t('부활!', 'green', bold=True)),
+        'gamemode survival @s', 'scoreboard players set @s bw.deny -1', 'function bw:hack/stasisend', 'function bw:game/kit', 'title @s times 0 20 5', 'title @s subtitle ""', 'title @s title ' + snbt(t('부활!', 'green', bold=True)),
         'effect give @s minecraft:resistance 2 4 true'])
 
     # ------------------------------------------------------------------ beds
@@ -302,7 +315,8 @@ def write(P, maps, lobby, resets, n_installed):
         *[f"schedule clear bw:reset/{m['id']}/{w}" for m in maps for w in ['try', 'place'] + [f'w{k}' for k in range(0, 1 + (len(resets[m['id']]['wipe']) - 1) // 14)]],
         'worldborder center 0 0', 'worldborder set 59999968',
         # the bots leave without the dying act (a dying mannequin cannot be saved, and the server says so in its log)
-        'function bw:ai/purge', 'kill @e[tag=bw.round,type=!minecraft:mannequin]', 'kill @e[type=minecraft:item,tag=bw.res]',
+        'function bw:dragon/end', 'function bw:ai/purge', 'tp @e[tag=bw.mob] 0 -400 0', 'kill @e[tag=bw.round,type=!minecraft:mannequin]', 'kill @e[type=minecraft:item,tag=bw.res]',
+        'kill @e[type=minecraft:experience_orb]',
         *by_map(maps, 'end'),
         'scoreboard objectives setdisplay sidebar',
         'execute as @a[tag=bw.play] run function bw:game/leave',
@@ -311,7 +325,7 @@ def write(P, maps, lobby, resets, n_installed):
         'gamerule locator_bar true', 'gamerule show_advancement_messages true', 'scoreboard players set #state bw 0', 'scoreboard players set #map bw 0'])
     sx, sy, sz = lobby['spawn']
     P.fn('game/leave', ['tag @s remove bw.play', 'tag @s remove bw.out', 'tag @s remove bw.fighter', 'scoreboard players set @s bw.resp 0', 'scoreboard players set @s bw.death 0',
-                        'team leave @s', 'clear @s', 'effect clear @s', 'attribute @s minecraft:attack_speed base reset',
+                        'team leave @s', 'clear @s', 'effect clear @s', 'attribute @s minecraft:attack_speed base reset', 'attribute @s minecraft:block_break_speed base reset', 'attribute @s minecraft:gravity base reset',
                         'gamemode adventure @s', 'gamemode creative @s[tag=bw.was_c]', 'tag @s remove bw.was_c',
                         f'tp @s {lobby["tp"]}', f'spawnpoint @s {sx} {sy} {sz}',
                         'effect give @s minecraft:night_vision infinite 0 true', 'effect give @s minecraft:saturation infinite 0 true',
@@ -334,7 +348,7 @@ def write(P, maps, lobby, resets, n_installed):
                       f'summon minecraft:armor_stand {x}.5 {y + 2.6} {z}.5 ' + stand % ('', snbt(t(name, col, bold=True))),
                       f'summon minecraft:armor_stand {x}.5 {y + 2.3} {z}.5 ' + stand % (f',"bw.holo.{kind}s"', snbt(t('곧 생성', 'yellow'))),
                       f'summon minecraft:armor_stand {x}.5 {y + 0.4} {z}.5 {{Invisible:1b,NoGravity:1b,Marker:1b,Tags:["bw","bw.round","bw.spin"],equipment:{{head:{{id:"minecraft:{block}",count:1}}}}}}']
-        P.fn(f'm/{mid}/begin', begin)
+        P.fn(f'm/{mid}/begin', begin + [f'function bw:m/{mid}/gem_d'])       # every diamond generator starts with one diamond
         P.fn(f'm/{mid}/spawn', [f"execute if score @s bw.team matches {i} run tp @s {T[i]['spawn'][0]}.5 {T[i]['spawn'][1]} {T[i]['spawn'][2]}.5 {T[i]['yaw']} 0" for i in range(N)])
         tick = ['scoreboard players add #t4 bw 1', 'execute if score #t4 bw matches 4.. run scoreboard players set #t4 bw 0']
         res = lambda item, x, y, z: f'summon minecraft:item {x}.5 {y + 0.3} {z}.5 {{Item:{{id:"minecraft:{item}",count:1}},PickupDelay:0s,Age:-32768s,Motion:[0d,0d,0d],Tags:["bw","bw.res"]}}'
@@ -443,8 +457,8 @@ def write(P, maps, lobby, resets, n_installed):
                                {'score': {'name': '@s', 'objective': 'bw.stage'}, 'color': 'aqua'}, t('단계. 계속 플레이해도 돼.\n', 'gray'))])
     tick = ['execute if score #state bw matches 3 run function bw:game/tick',
             # everyone alive in a round is a fighter; so is every bot
-            'tag @a[tag=bw.fighter,tag=!bw.play] remove bw.fighter', 'execute if score #state bw matches 3 run tag @a[tag=bw.play,gamemode=adventure] add bw.fighter',
-            'tag @a[tag=bw.fighter,gamemode=!adventure] remove bw.fighter',
+            'tag @a[tag=bw.fighter,tag=!bw.play] remove bw.fighter', 'execute if score #state bw matches 3 run tag @a[tag=bw.play,gamemode=survival] add bw.fighter',
+            'tag @a[tag=bw.fighter,gamemode=!survival] remove bw.fighter',
             'scoreboard players remove @a[scores={bw.gcd=1..}] bw.gcd 1',
             'scoreboard players add #lt bw 1', 'execute if score #state bw matches 0 if score #lt bw matches 20.. run function bw:lobby/second']
     return dict(load=load, tick=tick)
