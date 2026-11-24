@@ -162,16 +162,20 @@ def write(P, maps, navs):
                         f'positioned {bx} {by} {bz} run function bw:ai/golemchk {{i:{i}}}']
         P.fn(f'm/{mid}/sec', sec)
     P.add('game/second', by_map(maps, 'sec'))
-    begin = ['function bw:ai/level', 'kill @e[type=minecraft:marker,tag=bw.goal]', 'function bw:ai/purge',
+    # seven different names a round: each is drawn from a pool and taken out of it. (Drawn one by one from the full list, two bots shared
+    # a name in about one round out of three, and "the team that is out broke a bed" is how that read in the chat.)
+    P.fn('ai/names', ['data modify storage bw:ai pool set from storage bw:ai names',
+                      *[cmd for j, i in enumerate(BOTS) for cmd in ('execute store result storage bw:tmp k int 1 run random value 0..%d' % (len(NAMES) - 1 - j),
+                                                                    f'function bw:ai/name{i} with storage bw:tmp')]])
+    begin = ['function bw:ai/level', 'kill @e[type=minecraft:marker,tag=bw.goal]', 'function bw:ai/purge', 'function bw:ai/names',
              'execute if score #a_hack bw matches 1 run ' + tell('@a[tag=bw.play]', t('⚠ ', 'red'), t('이번 판 상대는 뭔가 수상해… 핵을 쓰는 것 같아.', 'yellow'))]
     for i in BOTS:
         begin += [*[f'scoreboard players set #{v}{i} bw 0' for v in ('bsw', 'bar', 'btl', 'bfb', 'bga', 'wfe', 'wau', 'wdi', 'wem', 'bdone')],
                   f'scoreboard players operation #fs{i} bw = #a_eff bw',
-                  'execute store result storage bw:tmp k int 1 run random value 0..%d' % (len(NAMES) - 1), f'function bw:ai/name{i} with storage bw:tmp',
                   f'execute store result storage bw:ai ctx.T int 1 run scoreboard players get #a_def bw', f'function bw:ai/defcopy{i} with storage bw:ai ctx',
                   f'summon minecraft:marker 0 0 0 {{Tags:["bw","bw.round","bw.goal","bw.g{i}"]}}',
                   f'function bw:ai/spawn{i}']
-        P.fn(f'ai/name{i}', [f'$data modify storage bw:ai n{i} set from storage bw:ai names[$(k)]'])
+        P.fn(f'ai/name{i}', [f'$data modify storage bw:ai n{i} set from storage bw:ai pool[$(k)]', f'$data remove storage bw:ai pool[$(k)]'])
         P.fn(f'ai/defcopy{i}', [f'$data modify storage bw:bot def{i} set from storage bw:nav $(m).def{i}_$(T)'])
         P.fn(f'ai/spawn{i}', by_map(maps, f'bot{i}'))
         P.fn(f'ai/init{i}', [
