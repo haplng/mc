@@ -53,13 +53,20 @@ def nice(x):
 
 
 F = {'task': 1.5, 'goal': 2.0, 'challenge': 3.0}
+SUG = {}
+
+
+def factor(t):
+    # 초반엔 도전과제가 몰려 있어서 작게, 뒤로 갈수록 크게
+    return 0.5 if t < 30 else (1.0 if t < 60 else 2.0)
 print('\n%-11s %5s %9s %11s %11s %11s' % ('key', 'n', 'min', 'income', 'suggest', 'now'))
 for a in ADV.A:
     k = a['key']
     if k in T:
         t = statistics.median(T[k])
         g = math.exp(sum(math.log(v) for v in I[k]) / len(I[k]))
-        print('%-11s %5d %9.1f %11s %11s %11s   %s' % (k, len(T[k]), t, won(int(g)), won(nice(g * F[a['frame']])), won(a['reward'] or 0), a['title']))
+        SUG[k] = nice(g * factor(t))
+        print('%-11s %5d %9.1f %11s %11s %11s   %s' % (k, len(T[k]), t, won(int(g)), won(SUG[k]), won(a['reward'] or 0), a['title']))
     else:
         print('%-11s %5d %9s %11s %11s %11s   %s' % (k, 0, '-', '-', '?', won(a['reward'] or 0), a['title']))
 for sec in sections:
@@ -67,3 +74,7 @@ for sec in sections:
     for name, ts in sections[sec].items():
         ok = [t for t in ts if t >= 0]
         print('  %-22s %s' % (name, ('%7.1f (%.0f ~ %.0f)%s' % (statistics.median(ok), min(ok), max(ok), '' if len(ok) == len(ts) else '  ※ %d번은 못 감' % (len(ts) - len(ok)))) if ok else '-'))
+
+if os.environ.get('SUGOUT'):
+    import json
+    json.dump(SUG, open(os.environ['SUGOUT'], 'w'))
